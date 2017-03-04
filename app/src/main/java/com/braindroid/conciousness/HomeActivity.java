@@ -69,9 +69,16 @@ public class HomeActivity extends AppCompatActivity
         recordingListView = ViewFinder.in(this, R.id.home_activity_recording_list_view);
 
         MediaRecorder mediaRecorder = new MediaRecorder();
-        BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(mediaRecorder, this);
+        BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(this);
+
         deviceRecorder = new DeviceRecorder(mediaRecorder, basicRecordingProvider);
-        deviceRecorder.initialize();
+        if(basicRecordingProvider.hasFiles()) {
+            deviceRecorder.setRecordings(basicRecordingProvider.attemptRestore());
+            recordingListView.setNewList(deviceRecorder.getAllRecordings());
+            deviceRecorder.advance();
+        } else {
+            deviceRecorder.initialize();
+        }
     }
 
     private void onPrimaryStateTextViewClicked() {
@@ -105,6 +112,11 @@ public class HomeActivity extends AppCompatActivity
     @Override
     public void playRecording(Recording currentRecording) {
         Timber.v("playRecording() called with: currentRecording = [" + currentRecording + "]");
+
+        if(!currentRecording.isPlayable()) {
+            Timber.w("Cannot play unplayable recording - %s", currentRecording);
+            return;
+        }
 
         if(play_recording_last_media_recorder != null) {
             Timber.v("Stopping %s", play_recording_last_media_recorder);

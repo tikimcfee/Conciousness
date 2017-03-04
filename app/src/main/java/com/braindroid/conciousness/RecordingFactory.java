@@ -12,9 +12,10 @@ public class RecordingFactory {
     private RecordingFactory() {}
 
     public static Recording create(final String path) {
+        final String cleanPath = path.endsWith(".aac") ? path : path + ".aac";
         return new Recording() {
 
-            private final File file = new File(path + ".aac");
+            private final File file = new File(cleanPath);
             private String id;
 
             @Override
@@ -34,6 +35,11 @@ public class RecordingFactory {
             }
 
             @Override
+            public boolean isPlayable() {
+                return file.exists() && file.length() > 32;
+            }
+
+            @Override
             public String identifier() {
                 if(id == null) {
                     id = file.getAbsolutePath();
@@ -46,6 +52,25 @@ public class RecordingFactory {
                 return "$classname{" +
                         "file=" + file +
                         '}';
+            }
+        };
+    }
+
+    public static Recording unplayable() {
+        return new Recording() {
+            @Override
+            public File asFile() {
+                return new File("inMemory_unplayable");
+            }
+
+            @Override
+            public String identifier() {
+                return "UNPLAYABLE_AUDIO";
+            }
+
+            @Override
+            public boolean isPlayable() {
+                return false;
             }
         };
     }

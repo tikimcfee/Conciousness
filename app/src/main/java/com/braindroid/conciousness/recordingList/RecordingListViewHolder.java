@@ -55,7 +55,11 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
         currentViewModel = listViewModel;
 
         mainButton.setText(listViewModel.getRecordingTitle());
+        if(listViewModel.isPlayable()) {
 
+        } else {
+
+        }
     }
 
     private void onMainButtonClicked() {
@@ -64,6 +68,5 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
             return;
         }
         onClick.onRecordingClicked(currentViewModel, getAdapterPosition());
-
     }
 }

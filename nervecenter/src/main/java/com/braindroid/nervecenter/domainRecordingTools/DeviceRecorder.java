@@ -25,7 +25,8 @@ public class DeviceRecorder
     private Recording currentRecording = null;
     private boolean isRecording = false;
 
-    public DeviceRecorder(MediaRecorder mediaRecorder, RecordingProvider recordingProvider) {
+    public DeviceRecorder(MediaRecorder mediaRecorder,
+                          RecordingProvider recordingProvider) {
         this.mediaRecorder = mediaRecorder;
         this.recordingProvider = recordingProvider;
     }
@@ -66,11 +67,8 @@ public class DeviceRecorder
         return successful;
     }
 
-    private void reinitialize(boolean advance) {
+    private void reinitialize() {
         mediaRecorder.reset();
-        if(advance) {
-            advance();
-        }
         initialize();
     }
 
@@ -103,7 +101,7 @@ public class DeviceRecorder
             return;
         }
         currentRecording = recordingProvider.acquireNewRecording();
-        reinitialize(false);
+        reinitialize();
     }
 
     public boolean isRecording() {
@@ -112,6 +110,14 @@ public class DeviceRecorder
 
     public List<Recording> getAllRecordings() {
         return Collections.unmodifiableList(completedRecordings);
+    }
+
+    public void setRecordings(List<Recording> newRecordings) {
+        completedRecordings.clear();
+        completedRecordings.addAll(newRecordings);
+        if(newRecordings.size() > 0) {
+            currentRecording = completedRecordings.get(newRecordings.size() - 1);
+        }
     }
 
     //region Callbacks

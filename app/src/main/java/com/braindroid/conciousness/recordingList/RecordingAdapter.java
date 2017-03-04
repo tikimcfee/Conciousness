@@ -86,6 +86,12 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
             Timber.w("Dropping onRecordingClick... %s={%s}", viewModel, position);
             return;
         }
+
+        if(!viewModel.isPlayable()) {
+            Timber.v("Recording is not playable %s={%s}", viewModel, position);
+            return;
+        }
+
         onRecordingItemClicked.onClick(recordings.get(position), position);
     }
 
