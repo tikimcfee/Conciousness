@@ -6,6 +6,8 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -14,8 +16,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
+import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
 import com.braindroid.nervecenter.recordingTools.Recording;
+import com.braindroid.nervecenter.utils.ViewFinder;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,36 +29,44 @@ import timber.log.Timber;
 
 import static android.support.v4.content.PermissionChecker.PERMISSION_GRANTED;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity
+        implements RecordingPlayer {
+
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());;
 
     private DeviceRecorder deviceRecorder = null;
 
     private Button centerRecordButton;
     private TextView primaryStateTextView;
+    private RecordingListView recordingListView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_home);
 
         if(Timber.treeCount() == 0) {
             Timber.plant(new Timber.DebugTree());
         }
 
-        centerRecordButton = (Button)findViewById(R.id.home_activity_central_feature_button);
+        centerRecordButton = ViewFinder.in(this, R.id.home_activity_central_feature_button);
         centerRecordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onCenterRecordButtonClicked();
             }
         });
-        primaryStateTextView= (TextView)findViewById(R.id.home_activity_central_feature_state_info_textView);
+        primaryStateTextView = ViewFinder.in(this, R.id.home_activity_central_feature_state_info_textView);
         primaryStateTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onPrimaryStateTextViewClicked();
             }
         });
+
+        recordingListView = ViewFinder.in(this, R.id.home_activity_recording_list_view);
 
         MediaRecorder mediaRecorder = new MediaRecorder();
         BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(mediaRecorder, this);
@@ -79,8 +92,18 @@ public class HomeActivity extends AppCompatActivity {
         playRecording(currentRecording);
     }
 
+    private void updateList() {
+        uiHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                recordingListView.setNewList(deviceRecorder.getAllRecordings());
+            }
+        });
+    }
+
     private MediaPlayer play_recording_last_media_recorder = null;
-    private void playRecording(Recording currentRecording) {
+    @Override
+    public void playRecording(Recording currentRecording) {
         Timber.v("playRecording() called with: currentRecording = [" + currentRecording + "]");
 
         if(play_recording_last_media_recorder != null) {
@@ -93,8 +116,6 @@ public class HomeActivity extends AppCompatActivity {
         play_recording_last_media_recorder = mp;
 
         try {
-//            FileInputStream fi = new FileInputStream(currentRecording.asFile());
-//            mp.setDataSource(fi.getFD());
             mp.setDataSource(currentRecording.asFile().getAbsolutePath());
             Timber.v("Playing [%s]", currentRecording);
 
@@ -143,6 +164,7 @@ public class HomeActivity extends AppCompatActivity {
             Timber.v("Stopping recording");
             deviceRecorder.stopRecording();
             deviceRecorder.advance();
+            updateList();
         } else {
             Timber.v("Starting recording");
             recording = deviceRecorder.startRecording();

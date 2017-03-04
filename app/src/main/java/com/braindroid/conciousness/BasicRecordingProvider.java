@@ -30,10 +30,6 @@ public class BasicRecordingProvider implements RecordingProvider {
         this.context = context;
     }
 
-    public boolean initialize() {
-        return deviceRecorder.initialize();
-    }
-
     //region File handling
     private String getNextFileName() {
         return String.format(Locale.ENGLISH, "audio_recording_%s", ++currentFileNumber);
@@ -68,7 +64,7 @@ public class BasicRecordingProvider implements RecordingProvider {
     //region Provider Implementation
     @Override
     public Recording acquireNewRecording() {
-        return currentRecording = vendRecording(getFile(true).getPath());
+        return currentRecording = RecordingFactory.create(getFile(true).getPath());
     }
 
     @Override
@@ -77,35 +73,6 @@ public class BasicRecordingProvider implements RecordingProvider {
             currentRecording = acquireNewRecording();
         }
         return currentRecording;
-    }
-
-    private static Recording vendRecording(final String path) {
-        return new Recording() {
-            private final File file = new File(path + ".aac");
-
-            @Override
-            public File asFile() {
-                Timber.v("Vend recording - %s", this);
-                if(!file.exists()) {
-                    try {
-                        if(!file.createNewFile()){
-                            Timber.e("File does not exist on disk.");
-                        }
-                    } catch (IOException e) {
-                        Timber.e(e, "Failed to create new file - %s", this);
-                        e.printStackTrace();
-                    }
-                }
-                return file;
-            }
-
-            @Override
-            public String toString() {
-                return "$classname{" +
-                        "file=" + file +
-                        '}';
-            }
-        };
     }
     //endregion
 }
