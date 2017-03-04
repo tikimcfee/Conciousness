@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_activity_recording_active_recording">recording…</string>
+    <string name="home_activity_recording_inactive_tap_to_start">press to record</string>
+</resources>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.braindroid.conciousness.HomeActivity"
+    android:id="@+id/home_activity_root_constraintLayout"
+
+    >
+    
+    <!--<android.support.constraint.Guideline-->
+        <!--android:layout_width="1dp"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:orientation="vertical"-->
+        <!--android:id="@+id/home_activity_central_vertical_guideline"-->
+        <!--app:layout_constraintGuide_percent="0.5" />-->
+
+    <android.support.constraint.Guideline
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/guideline"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5"
+        />
+
+    <android.support.constraint.Guideline
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/guideline2"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.2"
+        />
+
+    <android.support.constraint.Guideline
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/guideline3"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.5"
+        />
+
+    <Button
+        android:id="@+id/home_activity_central_feature_button"
+        android:layout_width="88dp"
+        android:layout_height="88dp"
+        android:background="@drawable/home_activity_central_rounded_image"
+
+        android:text="record"
+        android:textAllCaps="false"
+        android:textSize="18sp"
+        android:textColor="@color/colorAccent"
+
+        app:layout_constraintRight_toLeftOf="@+id/guideline"
+        tools:layout_constraintTop_creator="1"
+        tools:layout_constraintRight_creator="1"
+        tools:layout_constraintLeft_creator="1"
+        app:layout_constraintLeft_toLeftOf="@+id/guideline"
+        app:layout_constraintTop_toTopOf="@+id/guideline2"
+        android:layout_marginTop="8dp"
+        />
+
+    <TextView
+        android:paddingTop="11dp"
+        android:paddingBottom="11dp"
+        android:paddingLeft="22dp"
+        android:paddingRight="22dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/home_activity_central_feature_state_info_textView"
+        android:text="@string/home_activity_recording_inactive_tap_to_start"
+        android:background="@drawable/home_activity_central_state_info_background"
+        android:textColor="@color/colorPrimaryStateInactiveForeground"
+
+        app:layout_constraintRight_toLeftOf="@+id/guideline"
+        tools:layout_constraintTop_creator="1"
+        tools:layout_constraintRight_creator="1"
+        tools:layout_constraintLeft_creator="1"
+        app:layout_constraintLeft_toLeftOf="@+id/guideline"
+        app:layout_constraintTop_toBottomOf="@+id/home_activity_central_feature_button"
+        android:layout_marginTop="22dp"
+        />
+
+
+</android.support.constraint.ConstraintLayout>

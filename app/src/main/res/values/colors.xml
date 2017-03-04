@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#274679</color>
+    <color name="colorPrimaryDark">#251b4b</color>
+    <color name="colorAccent">#ffffff</color>
+
+    <color name="colorPrimaryStateInactiveBackground">#004422</color>
+    <color name="colorPrimaryStateActiveBackground">#008866</color>
+
+    <color name="colorPrimaryStateActiveForeground">#BBFF0000</color>
+    <color name="colorPrimaryStateInactiveForeground">#009999</color>
+
+    <color name="colorPrimaryStateIn">#004422</color>
+</resources>
