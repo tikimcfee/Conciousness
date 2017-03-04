@@ -12,6 +12,7 @@ import java.util.List;
 
 import timber.log.Timber;
 
+import static android.media.MediaRecorder.AudioSource.DEFAULT;
 import static android.media.MediaRecorder.AudioSource.MIC;
 
 

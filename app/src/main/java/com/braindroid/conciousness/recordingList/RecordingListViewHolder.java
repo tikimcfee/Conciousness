@@ -15,7 +15,7 @@ import timber.log.Timber;
 public class RecordingListViewHolder extends RecyclerView.ViewHolder {
 
     public interface OnClick {
-        void onRecordingClicked(RecordingListViewModel viewModel, int position);
+        void onRecordingClicked(RecordingListViewModel viewModel, int position, boolean longPress);
     }
 
     private final View rootLayout;
@@ -45,7 +45,14 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
         mainButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onMainButtonClicked();
+                onMainButtonClicked(false);
+            }
+        });
+        mainButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                onMainButtonClicked(true);
+                return true;
             }
         });
         mainTextView = ViewFinder.in(rootLayout, R.id.view_recording_list_item_row_mainTextView);
@@ -55,18 +62,14 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
         currentViewModel = listViewModel;
 
         mainButton.setText(listViewModel.getRecordingTitle());
-        if(listViewModel.isPlayable()) {
-
-        } else {
-
-        }
+        mainTextView.setText(listViewModel.getTopSupplementalText());
     }
 
-    private void onMainButtonClicked() {
+    private void onMainButtonClicked(boolean longPress) {
         if(onClick == null) {
             Timber.w("No onClickListener set");
             return;
         }
-        onClick.onRecordingClicked(currentViewModel, getAdapterPosition());
+        onClick.onRecordingClicked(currentViewModel, getAdapterPosition(), longPress);
     }
 }

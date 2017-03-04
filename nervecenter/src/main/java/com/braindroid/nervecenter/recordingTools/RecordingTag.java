@@ -1,9 +1,30 @@
 package com.braindroid.nervecenter.recordingTools;
 
-public interface RecordingTag {
+import com.bluelinelabs.logansquare.annotation.JsonField;
+import com.bluelinelabs.logansquare.annotation.JsonObject;
 
-    String forDisplay();
+@JsonObject
+public class RecordingTag {
 
-    String forStorage();
+    @JsonField
+    private String forDisplay;
 
+    @JsonField
+    private String forStorage;
+
+    public String getForDisplay() {
+        return forDisplay;
+    }
+
+    public void setForDisplay(String forDisplay) {
+        this.forDisplay = forDisplay;
+    }
+
+    public String getForStorage() {
+        return forStorage;
+    }
+
+    public void setForStorage(String forStorage) {
+        this.forStorage = forStorage;
+    }
 }

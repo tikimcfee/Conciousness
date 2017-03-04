@@ -20,6 +20,7 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
 
     public interface OnRecordingItemClicked {
         void onClick(Recording recording, int position);
+        void onLongClick(Recording recording, int position);
     }
 
     private final List<Recording> recordings;
@@ -50,10 +51,10 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
         }
 
         Recording toBind = recordings.get(position);
-        RecordingListViewModel listViewModel = viewModelLruCache.get(toBind.identifier());
+        RecordingListViewModel listViewModel = viewModelLruCache.get(toBind.absolutePath());
         if(listViewModel == null) {
             listViewModel = RecordingTransformer.toViewModel(toBind);
-            viewModelLruCache.put(toBind.identifier(), listViewModel);
+            viewModelLruCache.put(toBind.absolutePath(), listViewModel);
         }
         holder.bind(listViewModel);
     }
@@ -68,7 +69,7 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
         if(!isValidRecordingPosition(position)) {
             return NO_ID;
         }
-        return recordings.get(position).identifier().hashCode();
+        return recordings.get(position).absolutePath().hashCode();
     }
     //endregion
 
@@ -81,7 +82,7 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
     }
 
     @Override
-    public void onRecordingClicked(RecordingListViewModel viewModel, int position) {
+    public void onRecordingClicked(RecordingListViewModel viewModel, int position, boolean longPress) {
         if(onRecordingItemClicked == null) {
             Timber.w("Dropping onRecordingClick... %s={%s}", viewModel, position);
             return;
@@ -92,7 +93,13 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
             return;
         }
 
-        onRecordingItemClicked.onClick(recordings.get(position), position);
+        Recording recording = recordings.get(position);
+        if(longPress) {
+            onRecordingItemClicked.onLongClick(recording, position);
+        } else {
+            onRecordingItemClicked.onClick(recording, position);
+        }
+
     }
 
     private boolean isValidRecordingPosition(int position) {

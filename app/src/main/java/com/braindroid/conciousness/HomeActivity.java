@@ -19,7 +19,10 @@ import android.widget.Toast;
 import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
+import com.braindroid.nervecenter.playbackTools.RecordingWriter;
 import com.braindroid.nervecenter.recordingTools.Recording;
+import com.braindroid.nervecenter.recordingTools.RecordingMetaWriter;
+import com.braindroid.nervecenter.recordingTools.RecordingUserMeta;
 import com.braindroid.nervecenter.utils.ViewFinder;
 
 import java.io.IOException;
@@ -30,7 +33,7 @@ import timber.log.Timber;
 import static android.support.v4.content.PermissionChecker.PERMISSION_GRANTED;
 
 public class HomeActivity extends AppCompatActivity
-        implements RecordingPlayer {
+        implements RecordingPlayer, RecordingWriter {
 
     private final Handler uiHandler = new Handler(Looper.getMainLooper());;
 
@@ -140,7 +143,17 @@ public class HomeActivity extends AppCompatActivity
         } catch (IOException e) {
             Timber.e(e, "Recording playback failed -> %s", currentRecording.toString());
         }
-//
+    }
+
+    @Override
+    public void writeRecordingMeta(Recording recording, RecordingUserMeta recordingUserMeta) {
+        if(recordingUserMeta == null) {
+            recordingUserMeta = new RecordingUserMeta();
+        }
+        recordingUserMeta.setRecordingTitle(recording.asFile().getName());
+        recordingUserMeta.setRecordingMetaFileName(recording.metaPath());
+        RecordingMetaWriter.writeMeta(this, recording, recordingUserMeta);
+        updateList();
     }
 
     private final int on_record_request_code = 100;

@@ -1,11 +1,11 @@
 package com.braindroid.conciousness;
 
 import android.content.Context;
-import android.media.MediaRecorder;
 
-import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.recordingTools.Recording;
+import com.braindroid.nervecenter.recordingTools.RecordingMetaWriter;
 import com.braindroid.nervecenter.recordingTools.RecordingProvider;
+import com.braindroid.nervecenter.recordingTools.RecordingUserMeta;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -47,10 +47,15 @@ public class BasicRecordingProvider implements RecordingProvider {
 
         ArrayList<Recording> restoredRecordings = new ArrayList<>();
         for(File file : list) {
-            if(file.length() > 0) {
-                restoredRecordings.add(RecordingFactory.create(file.getAbsolutePath()));
+            if(file.length() > 0 && file.getName().endsWith(".aac")) {
+                Recording recording = RecordingFactory.create(file.getAbsolutePath());
+
+                RecordingUserMeta userMeta = RecordingMetaWriter.readRecording(context, recording);
+                recording.setRecordingUserMeta(userMeta);
+
+                restoredRecordings.add(recording);
             } else {
-                if(!file.delete()) {
+                if(file.length() == 0 && !file.delete()) {
                     Timber.e("Failed to delete file with 0 length path=%s; replacing with unplayable audio file", file.getAbsolutePath());
                     restoredRecordings.add(RecordingFactory.unplayable());
                 }

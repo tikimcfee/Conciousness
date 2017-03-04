@@ -10,8 +10,11 @@ import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
 import com.braindroid.conciousness.R;
+import com.braindroid.conciousness.recordingTags.TagChooser;
 import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
+import com.braindroid.nervecenter.playbackTools.RecordingWriter;
 import com.braindroid.nervecenter.recordingTools.Recording;
+import com.braindroid.nervecenter.recordingTools.RecordingTag;
 import com.braindroid.nervecenter.utils.ViewFinder;
 
 import java.util.List;
@@ -55,6 +58,20 @@ public class RecordingListView extends FrameLayout
     @Override
     public void setNewList(List<Recording> newList) {
         recordingAdapter.setNewList(newList);
+    }
+
+    @Override
+    public void onLongClick(final Recording recording, int position) {
+        TagChooser.getTags(getContext(), new TagChooser.TagsCallback() {
+            @Override
+            public void onNewTags(List<RecordingTag> tags) {
+                if(getContext() instanceof RecordingWriter) {
+                    recording.getRecordingUserMeta().setTags(tags);
+                    ((RecordingWriter) getContext()).writeRecordingMeta(recording, recording.getRecordingUserMeta());
+                }
+            }
+        });
+
     }
 
     @Override
