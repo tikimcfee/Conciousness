@@ -4,7 +4,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
 import android.view.ViewGroup;
 
-import com.braindroid.nervecenter.recordingTools.Recording;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +19,11 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
     implements RecordingListViewHolder.OnClick {
 
     public interface OnRecordingItemClicked {
-        void onClick(Recording recording, int position);
-        void onLongClick(Recording recording, int position);
+        void onClick(PersistedRecording recording, int position);
+        void onLongClick(PersistedRecording recording, int position);
     }
 
-    private final List<Recording> recordings;
+    private final List<PersistedRecording> recordings;
     private final LruCache<String, RecordingListViewModel> viewModelLruCache;
 
     private OnRecordingItemClicked onRecordingItemClicked;
@@ -50,11 +50,12 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
             return;
         }
 
-        Recording toBind = recordings.get(position);
-        RecordingListViewModel listViewModel = viewModelLruCache.get(toBind.absolutePath());
+        PersistedRecording toBind = recordings.get(position);
+        String id = toBind.getSystemMeta().getTargetRecordingIdentifier();
+        RecordingListViewModel listViewModel = viewModelLruCache.get(id);
         if(listViewModel == null) {
             listViewModel = RecordingTransformer.toViewModel(toBind);
-            viewModelLruCache.put(toBind.absolutePath(), listViewModel);
+            viewModelLruCache.put(id, listViewModel);
         }
         holder.bind(listViewModel);
     }
@@ -69,11 +70,11 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
         if(!isValidRecordingPosition(position)) {
             return NO_ID;
         }
-        return recordings.get(position).absolutePath().hashCode();
+        return recordings.get(position).getSystemMeta().hashCode();
     }
     //endregion
 
-    public void setNewList(List<Recording> newList) {
+    public void setNewList(List<PersistedRecording> newList) {
         recordings.clear();
         viewModelLruCache.evictAll();
         recordings.addAll(newList);
@@ -89,11 +90,11 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
         }
 
         if(!viewModel.isPlayable()) {
-            Timber.v("Recording is not playable %s={%s}", viewModel, position);
+            Timber.v("PersistedRecording is not playable %s={%s}", viewModel, position);
             return;
         }
 
-        Recording recording = recordings.get(position);
+        PersistedRecording recording = recordings.get(position);
         if(longPress) {
             onRecordingItemClicked.onLongClick(recording, position);
         } else {

@@ -2,10 +2,12 @@ package com.braindroid.conciousness;
 
 import android.content.Context;
 
-import com.braindroid.nervecenter.recordingTools.Recording;
-import com.braindroid.nervecenter.recordingTools.RecordingMetaWriter;
+import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
 import com.braindroid.nervecenter.recordingTools.RecordingProvider;
-import com.braindroid.nervecenter.recordingTools.RecordingUserMeta;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
+import com.braindroid.nervecenter.recordingTools.models.Recording;
+import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
+import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -15,11 +17,14 @@ import java.util.Locale;
 
 import timber.log.Timber;
 
+import static com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler.AUDIO_DIRECTORY_PATH_ROOT;
+
 public class BasicRecordingProvider implements RecordingProvider {
 
     private final Context context;
+    private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
 
-    private Recording currentRecording;
+    private PersistedRecording currentRecording;
 
     private File sourcePath = null;
     private File currentFile = null;
@@ -32,12 +37,11 @@ public class BasicRecordingProvider implements RecordingProvider {
 
     //region File handling
     public boolean hasFiles() {
-        ensureSourcePath();
-        String[] list = sourcePath.list();
-        return list != null && list.length > 0;
+        return fileHandler.hasModels(context);
     }
 
-    public List<Recording> attemptRestore() {
+    public List<PersistedRecording> attemptRestore() {
+        Timber.d("attemptRestore() called");
         ensureSourcePath();
         File[] list = sourcePath.listFiles();
         if(list == null || list.length == 0) {
@@ -45,57 +49,47 @@ public class BasicRecordingProvider implements RecordingProvider {
             return Collections.emptyList();
         }
 
-        ArrayList<Recording> restoredRecordings = new ArrayList<>();
+        ArrayList<PersistedRecording> restoredRecordings = new ArrayList<>();
         for(File file : list) {
             if(file.length() > 0 && file.getName().endsWith(".aac")) {
-                Recording recording = RecordingFactory.create(file.getAbsolutePath());
+                final PersistedRecording expectedRecording = RecordingFactory.create(context, file.getName());
+                final PersistedRecording inflatedRecording = PersistedRecordingModelHandler.readPersistedRecordingModel(context, expectedRecording);
 
-                RecordingUserMeta userMeta = RecordingMetaWriter.readRecording(context, recording);
-                recording.setRecordingUserMeta(userMeta);
-
-                restoredRecordings.add(recording);
+                if(inflatedRecording == null) {
+                    Timber.v("No on-disk user model found for [%s]. returning as in-memory", expectedRecording, expectedRecording.getSystemMeta());
+                    restoredRecordings.add(expectedRecording);
+                    RecordingFactory.ensureStreams(context, expectedRecording);
+                } else {
+                    restoredRecordings.add(inflatedRecording);
+                    RecordingFactory.ensureStreams(context, inflatedRecording);
+                }
             } else {
                 if(file.length() == 0 && !file.delete()) {
                     Timber.e("Failed to delete file with 0 length path=%s; replacing with unplayable audio file", file.getAbsolutePath());
-                    restoredRecordings.add(RecordingFactory.unplayable());
+                    PersistedRecording persistedRecording = RecordingFactory.unplayable(context);
+                    RecordingFactory.ensureStreams(context, persistedRecording);
+                    restoredRecordings.add(persistedRecording);
                 }
             }
         }
 
         currentFileNumber = restoredRecordings.size();
-        currentRecording = restoredRecordings.get(currentFileNumber - 1);
+        if(currentFileNumber > 0) {
+            currentRecording = restoredRecordings.get(currentFileNumber - 1);
+        }
         return restoredRecordings;
     }
 
     private boolean ensureSourcePath() {
-        if(sourcePath == null || !sourcePath.exists()) {
-            Timber.v("sourcePath is null; attempting to acquire a new root.");
-            sourcePath = context.getFilesDir();
-            if(sourcePath == null || !sourcePath.canWrite() || !sourcePath.isDirectory()) {
-                Timber.e("Source path is not writable; %s", sourcePath);
-                return false;
-            }
-
-            File rootDirectory = new File(getRootDirectoryName(sourcePath));
-            if(!rootDirectory.exists()) {
-                if(!rootDirectory.mkdirs()) {
-                    Timber.e("Could not create root directory; Path : %s", rootDirectory);
-                    return false;
-                }
-            }
-
-            sourcePath = rootDirectory;
+        sourcePath = fileHandler.ensureDirectoryExists(context, AUDIO_DIRECTORY_PATH_ROOT);
+        if(sourcePath.list() != null) {
+            currentFileNumber = sourcePath.list().length;
         }
-
-        return true;
+        return fileHandler.valid(sourcePath);
     }
 
     private String getNextFileName() {
         return String.format(Locale.ENGLISH, "audio_recording_%s", ++currentFileNumber);
-    }
-
-    private String getRootDirectoryName(File sourcePath) {
-        return sourcePath.getAbsolutePath() + File.separator + "recordingSession";
     }
 
     private String currentFileNameAbsolute(File sourcePath, String fileName) {
@@ -103,24 +97,28 @@ public class BasicRecordingProvider implements RecordingProvider {
     }
 
     private File getFile(boolean create) {
-
-
+        ensureSourcePath();
         if(create || currentFile == null) {
             currentFile = new File(currentFileNameAbsolute(sourcePath, getNextFileName()));
         }
-
         return currentFile;
     }
     //endregion
 
     //region Provider Implementation
     @Override
-    public Recording acquireNewRecording() {
-        return currentRecording = RecordingFactory.create(getFile(true).getPath());
+    public PersistedRecording acquireNewRecording() {
+        PersistedRecording recording = RecordingFactory.create(context, getFile(true).getName());
+        if(context instanceof PersistingRecordingMetaWriter) {
+            RecordingFactory.ensureStreams(context, recording);
+            ((PersistingRecordingMetaWriter) context).persistRecording(recording);
+        }
+
+        return currentRecording = recording;
     }
 
     @Override
-    public Recording getCurrentRecording() {
+    public PersistedRecording getCurrentRecording() {
         if(currentRecording == null) {
             currentRecording = acquireNewRecording();
         }

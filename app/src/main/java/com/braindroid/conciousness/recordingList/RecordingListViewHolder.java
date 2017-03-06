@@ -41,7 +41,7 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
         this.rootLayout = itemView;
         this.onClick = onClick;
 
-        mainButton = ViewFinder.in(rootLayout, R.id.view_recording_list_item_row_rootButton);
+        mainButton = ViewFinder.in(rootLayout, R.id.view_recording_list_item_row_playPauseButton);
         mainButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

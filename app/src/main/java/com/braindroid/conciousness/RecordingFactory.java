@@ -1,40 +1,65 @@
 package com.braindroid.conciousness;
 
-import com.braindroid.nervecenter.recordingTools.Recording;
+import android.content.Context;
+
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecordingSystemMeta;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecordingUserMeta;
+import com.braindroid.nervecenter.recordingTools.models.Recording;
+import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import timber.log.Timber;
 
 public class RecordingFactory {
 
     private RecordingFactory() {}
 
-    public static Recording create(final String path) {
-        final String cleanPath = path.endsWith(".aac") ? path : path + ".aac";
+    private static final PersistedRecordingFileHandler handler = new PersistedRecordingFileHandler();
 
-        return new Recording(cleanPath);
+    public static PersistedRecording create(final Context context, final String requestedName) {
+        Timber.v("create() called with: context = [" + context + "], requestedName = [" + requestedName + "]");
+
+        final String cleanName = requestedName.endsWith(".aac") ? requestedName : requestedName + ".aac";
+
+        PersistedRecording toReturn = new PersistedRecording();
+        toReturn.setName("User recording : " + cleanName);
+
+        PersistedRecordingSystemMeta meta = new PersistedRecordingSystemMeta();
+        meta.setTargetModelIdentifier(cleanName + "_meta.json");
+        meta.setTargetRecordingIdentifier(cleanName);
+        toReturn.setSystemMeta(meta);
+
+        PersistedRecordingUserMeta userMeta = new PersistedRecordingUserMeta();
+        userMeta.setBaseProperties(new HashMap<String, String>());
+        toReturn.setUserMeta(userMeta);
+        toReturn.setTags(new ArrayList<Recording.Tag>());
+
+        return toReturn;
     }
 
-    public static Recording unplayable() {
-        return new Recording() {
-            @Override
-            public File asFile() {
-                return new File("inMemory_unplayable");
-            }
+    public static void ensureStreams(Context context, PersistedRecording toReturn) {
+        File audioFile = handler.create(handler.getAudioFilePath(context, toReturn));
+        if(audioFile.length() > 32){
+            toReturn.setAudioInputStream(handler.ensureAudioFileInputStream(context, toReturn));
+        } else {
+            toReturn.setAudioInputStream(handler.ensureAudioFileInputStream(context, toReturn));
+            toReturn.setAudioOutputStream(handler.ensureAudioFileOutputStream(context, toReturn));
+        }
+        File modelFile = handler.create(handler.getModelFilePath(context, toReturn));
+        if(modelFile.length() > 0) {
+            toReturn.setModelInputStream(handler.ensureModelFileInputStream(context, toReturn));
+        } else {
+            toReturn.setModelInputStream(handler.ensureModelFileInputStream(context, toReturn));
+            toReturn.setModelOutputStream(handler.ensureModelFileOutputStream(context, toReturn));
+        }
+    }
 
-            @Override
-            public String absolutePath() {
-                return "UNPLAYABLE_AUDIO";
-            }
-
-            @Override
-            public String metaName() {
-                return absolutePath() + "_meta.json";
-            }
-
-            @Override
-            public boolean isPlayable() {
-                return false;
-            }
-        };
+    private static final String INVALID_RECORDING_PATH_FILE_NAME = "temporary_invalid_recording.aac";
+    public static PersistedRecording unplayable(final Context context) {
+        return create(context, INVALID_RECORDING_PATH_FILE_NAME);
     }
 }

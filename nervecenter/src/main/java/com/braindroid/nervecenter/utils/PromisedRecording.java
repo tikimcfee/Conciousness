@@ -1,19 +1,17 @@
 package com.braindroid.nervecenter.utils;
 
-import com.braindroid.nervecenter.recordingTools.Recording;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 
-import java.io.File;
+public abstract class PromisedRecording implements ObjectPromise<PersistedRecording> {
 
-public abstract class PromisedRecording implements ObjectPromise<Recording> {
-
-    abstract public Recording getRecording();
+    abstract public PersistedRecording getRecording();
 
 //    private PromisedRecording currentRecording = new PromisedRecording() {
 //        @Override
-//        public Recording getRecording() {
-//            Recording toReturn = recordingProvider.getCurrentRecording();
+//        public PersistedRecording getRecording() {
+//            PersistedRecording toReturn = recordingProvider.getCurrentRecording();
 //            if(toReturn == null) {
-//                toReturn = new Recording() {
+//                toReturn = new PersistedRecording() {
 //                    @Override
 //                    public File asFile() {
 //                        return new File("");
@@ -24,7 +22,7 @@ public abstract class PromisedRecording implements ObjectPromise<Recording> {
 //        }
 //
 //        @Override
-//        public Recording getT() {
+//        public PersistedRecording getT() {
 //            return null;
 //        }
 //    };

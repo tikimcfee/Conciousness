@@ -1,9 +1,11 @@
 package com.braindroid.nervecenter.recordingTools;
 
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
+
 public interface Recorder {
 
     /**
-     * Recording Controls
+     * PersistedRecording Controls
      */
 
     void startRecording();
@@ -19,6 +21,6 @@ public interface Recorder {
 
     RecordingProvider getRecordingProvider();
 
-    void setRecording(Recording audioRecording);
+    void setRecording(PersistedRecording audioRecording);
 
 }

@@ -2,7 +2,8 @@ package com.braindroid.nervecenter.playbackTools;
 
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 
-public interface RecordingPlayer {
+public interface PersistingRecordingMetaWriter {
 
-    void playRecording(PersistedRecording recording);
+    void persistRecording(PersistedRecording persistedRecording);
+
 }

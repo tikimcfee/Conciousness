@@ -11,17 +11,17 @@ import android.widget.FrameLayout;
 
 import com.braindroid.conciousness.R;
 import com.braindroid.conciousness.recordingTags.TagChooser;
+import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
 import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
-import com.braindroid.nervecenter.playbackTools.RecordingWriter;
-import com.braindroid.nervecenter.recordingTools.Recording;
-import com.braindroid.nervecenter.recordingTools.RecordingTag;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
+import com.braindroid.nervecenter.recordingTools.models.Recording;
 import com.braindroid.nervecenter.utils.ViewFinder;
 
 import java.util.List;
 
 
 public class RecordingListView extends FrameLayout
-        implements ListView<Recording>, RecordingAdapter.OnRecordingItemClicked {
+        implements ListView<PersistedRecording>, RecordingAdapter.OnRecordingItemClicked {
 
     private RecyclerView recyclerView;
     private LinearLayoutManager linearLayoutManager;
@@ -56,18 +56,18 @@ public class RecordingListView extends FrameLayout
 
     //region ListView interface implementation
     @Override
-    public void setNewList(List<Recording> newList) {
+    public void setNewList(List<PersistedRecording> newList) {
         recordingAdapter.setNewList(newList);
     }
 
     @Override
-    public void onLongClick(final Recording recording, int position) {
+    public void onLongClick(final PersistedRecording recording, int position) {
         TagChooser.getTags(getContext(), new TagChooser.TagsCallback() {
             @Override
-            public void onNewTags(List<RecordingTag> tags) {
-                if(getContext() instanceof RecordingWriter) {
-                    recording.getRecordingUserMeta().setTags(tags);
-                    ((RecordingWriter) getContext()).writeRecordingMeta(recording, recording.getRecordingUserMeta());
+            public void onNewTags(List<Recording.Tag> tags) {
+                if(getContext() instanceof PersistingRecordingMetaWriter) {
+                    recording.setTags(tags);
+                    ((PersistingRecordingMetaWriter) getContext()).persistRecording(recording);
                 }
             }
         });
@@ -75,14 +75,14 @@ public class RecordingListView extends FrameLayout
     }
 
     @Override
-    public void onClick(Recording recording, int position) {
+    public void onClick(PersistedRecording recording, int position) {
         if(getContext() instanceof RecordingPlayer) {
             ((RecordingPlayer) getContext()).playRecording(recording);
         }
     }
 
     @Override
-    public List<Recording> getCurrentList() {
+    public List<PersistedRecording> getCurrentList() {
         return null;
     }
     //endregion

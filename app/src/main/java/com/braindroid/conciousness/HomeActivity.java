@@ -19,10 +19,9 @@ import android.widget.Toast;
 import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
-import com.braindroid.nervecenter.playbackTools.RecordingWriter;
-import com.braindroid.nervecenter.recordingTools.Recording;
-import com.braindroid.nervecenter.recordingTools.RecordingMetaWriter;
-import com.braindroid.nervecenter.recordingTools.RecordingUserMeta;
+import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
+import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.utils.ViewFinder;
 
 import java.io.IOException;
@@ -33,7 +32,7 @@ import timber.log.Timber;
 import static android.support.v4.content.PermissionChecker.PERMISSION_GRANTED;
 
 public class HomeActivity extends AppCompatActivity
-        implements RecordingPlayer, RecordingWriter {
+        implements RecordingPlayer, PersistingRecordingMetaWriter {
 
     private final Handler uiHandler = new Handler(Looper.getMainLooper());;
 
@@ -85,7 +84,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void onPrimaryStateTextViewClicked() {
-        List<Recording> allRecordings = deviceRecorder.getAllRecordings();
+        List<PersistedRecording> allRecordings = deviceRecorder.getAllRecordings();
         int size = allRecordings.size();
         if(size == 0) {
             Timber.e("No available file to play.");
@@ -93,12 +92,7 @@ public class HomeActivity extends AppCompatActivity
         }
 
         int lastIndex = size - 1;
-        Recording currentRecording = allRecordings.get(lastIndex);
-        if(!currentRecording.asFile().exists()) {
-            Timber.e("File doesn't exist!");
-            return;
-        }
-
+        PersistedRecording currentRecording = allRecordings.get(lastIndex);
         playRecording(currentRecording);
     }
 
@@ -111,27 +105,22 @@ public class HomeActivity extends AppCompatActivity
         });
     }
 
-    private MediaPlayer play_recording_last_media_recorder = null;
+    private MediaPlayer play_recording_last_media_replayer = null;
     @Override
-    public void playRecording(Recording currentRecording) {
+    public void playRecording(PersistedRecording currentRecording) {
         Timber.v("playRecording() called with: currentRecording = [" + currentRecording + "]");
 
-        if(!currentRecording.isPlayable()) {
-            Timber.w("Cannot play unplayable recording - %s", currentRecording);
-            return;
-        }
-
-        if(play_recording_last_media_recorder != null) {
-            Timber.v("Stopping %s", play_recording_last_media_recorder);
-            play_recording_last_media_recorder.stop();
-            play_recording_last_media_recorder.release();
+        if(play_recording_last_media_replayer != null) {
+            Timber.v("Stopping %s", play_recording_last_media_replayer);
+            play_recording_last_media_replayer.stop();
+            play_recording_last_media_replayer.release();
         }
         MediaPlayer mp = new MediaPlayer();
         mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        play_recording_last_media_recorder = mp;
+        play_recording_last_media_replayer = mp;
 
         try {
-            mp.setDataSource(currentRecording.asFile().getAbsolutePath());
+            mp.setDataSource(currentRecording.getAudioInputStream().getFD());
             Timber.v("Playing [%s]", currentRecording);
 
             mp.prepare();
@@ -141,18 +130,13 @@ public class HomeActivity extends AppCompatActivity
             e.printStackTrace();
             return;
         } catch (IOException e) {
-            Timber.e(e, "Recording playback failed -> %s", currentRecording.toString());
+            Timber.e(e, "PersistedRecording playback failed -> %s", currentRecording.toString());
         }
     }
 
     @Override
-    public void writeRecordingMeta(Recording recording, RecordingUserMeta recordingUserMeta) {
-        if(recordingUserMeta == null) {
-            recordingUserMeta = new RecordingUserMeta();
-        }
-        recordingUserMeta.setRecordingTitle(recording.asFile().getName());
-        recordingUserMeta.setRecordingMetaFileName(recording.metaPath());
-        RecordingMetaWriter.writeMeta(this, recording, recordingUserMeta);
+    public void persistRecording(PersistedRecording persistedRecording) {
+        PersistedRecordingModelHandler.persistRecording(this, persistedRecording);
         updateList();
     }
 
@@ -184,7 +168,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void toggleAudioRecordingEnabled() {
-        Recording recording;
+        PersistedRecording recording;
         if(deviceRecorder.isRecording()) {
             Timber.v("Stopping recording");
             deviceRecorder.stopRecording();
@@ -193,7 +177,7 @@ public class HomeActivity extends AppCompatActivity
         } else {
             Timber.v("Starting recording");
             recording = deviceRecorder.startRecording();
-            primaryStateTextView.setText(recording.asFile().getName());
+            primaryStateTextView.setText(recording.getName());
         }
     }
 

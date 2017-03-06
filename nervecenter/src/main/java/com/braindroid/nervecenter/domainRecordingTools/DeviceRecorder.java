@@ -2,7 +2,7 @@ package com.braindroid.nervecenter.domainRecordingTools;
 
 import android.media.MediaRecorder;
 
-import com.braindroid.nervecenter.recordingTools.Recording;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.RecordingProvider;
 
 import java.io.IOException;
@@ -12,7 +12,6 @@ import java.util.List;
 
 import timber.log.Timber;
 
-import static android.media.MediaRecorder.AudioSource.DEFAULT;
 import static android.media.MediaRecorder.AudioSource.MIC;
 
 
@@ -21,9 +20,9 @@ public class DeviceRecorder
 
     private final MediaRecorder mediaRecorder;
     private final RecordingProvider recordingProvider;
-    private final LinkedList<Recording> completedRecordings = new LinkedList<>();
+    private final LinkedList<PersistedRecording> completedRecordings = new LinkedList<>();
 
-    private Recording currentRecording = null;
+    private PersistedRecording currentRecording = null;
     private boolean isRecording = false;
 
     public DeviceRecorder(MediaRecorder mediaRecorder,
@@ -48,11 +47,14 @@ public class DeviceRecorder
         }
 
         try {
-            mediaRecorder.setOutputFile(currentRecording.asFile().getAbsolutePath());
+            mediaRecorder.setOutputFile(currentRecording.getAudioOutputStream().getFD());
         } catch (IllegalStateException e) {
-            Timber.e(e, "Illegal State in initialize()");
+            Timber.e(e, "Illegal State in initialize() : %s", currentRecording);
             e.printStackTrace();
             return false;
+        } catch (IOException e) {
+            Timber.e(e, "Bade file in DeviceRecorder : %s", currentRecording);
+            e.printStackTrace();
         }
 
         boolean successful = true;
@@ -73,8 +75,8 @@ public class DeviceRecorder
         initialize();
     }
 
-    public Recording startRecording() {
-        Timber.v("Recording start - %s", currentRecording);
+    public PersistedRecording startRecording() {
+        Timber.v("PersistedRecording start - %s", currentRecording);
         try {
             mediaRecorder.start();
             isRecording = true;
@@ -84,8 +86,8 @@ public class DeviceRecorder
         return currentRecording;
     }
 
-    public Recording stopRecording() {
-        Timber.v("Recording stop - %s", currentRecording);
+    public PersistedRecording stopRecording() {
+        Timber.v("PersistedRecording stop - %s", currentRecording);
         try {
             mediaRecorder.stop();
             completedRecordings.add(currentRecording);
@@ -109,11 +111,11 @@ public class DeviceRecorder
         return isRecording;
     }
 
-    public List<Recording> getAllRecordings() {
+    public List<PersistedRecording> getAllRecordings() {
         return Collections.unmodifiableList(completedRecordings);
     }
 
-    public void setRecordings(List<Recording> newRecordings) {
+    public void setRecordings(List<PersistedRecording> newRecordings) {
         completedRecordings.clear();
         completedRecordings.addAll(newRecordings);
         if(newRecordings.size() > 0) {

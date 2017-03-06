@@ -4,14 +4,15 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 
-import com.braindroid.nervecenter.recordingTools.RecordingTag;
+import com.braindroid.nervecenter.recordingTools.models.Recording;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecordingTag;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class TagChooser {
 
-    private static final ArrayList<RecordingTag> recordingTags;
+    private static final ArrayList<Recording.Tag> recordingTags;
     final static CharSequence[] displays = new String[] {
             "Happy", "Sad", "Interesting", "Funny", "Deep", "Confusing"
     };
@@ -21,9 +22,9 @@ public class TagChooser {
     static {
         recordingTags = new ArrayList<>();
         for (int i = 0; i < displays.length; i++) {
-            RecordingTag recordingTag = new RecordingTag();
-            recordingTag.setForDisplay((String)displays[i]);
-            recordingTag.setForStorage((String)vals[i]);
+            Recording.Tag recordingTag = new PersistedRecordingTag();
+            recordingTag.setDisplay((String)displays[i]);
+            recordingTag.setIdentifier((String)vals[i]);
             recordingTags.add(recordingTag);
         }
     }
@@ -31,14 +32,14 @@ public class TagChooser {
 
 
     public interface TagsCallback {
-        void onNewTags(List<RecordingTag> tags);
+        void onNewTags(List<Recording.Tag> tags);
     }
 
     public static void getTags(Context context, final TagsCallback tagsCallback) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Choose Tags");
 
-        final ArrayList<RecordingTag> selectedTags = new ArrayList<>();
+        final ArrayList<Recording.Tag> selectedTags = new ArrayList<>();
         builder.setMultiChoiceItems(
                 displays, null, new DialogInterface.OnMultiChoiceClickListener() {
                     @Override
