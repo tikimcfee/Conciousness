@@ -16,8 +16,6 @@ public class RecordingFactory {
 
     private RecordingFactory() {}
 
-//    private static final PersistedRecordingFileHandler handler = new PersistedRecordingFileHandler();
-
     public static PersistedRecording create(final Context context, final String requestedName) {
         Timber.v("create() called with: context = [" + context + "], requestedName = [" + requestedName + "]");
 

@@ -25,12 +25,12 @@
         android:id="@+id/view_recording_list_item_row_current_time_textView"
         android:layout_width="0dp"
         android:layout_height="20dp"
-        app:layout_constraintLeft_toRightOf="@+id/view_recording_list_item_row_current_time_remaining_time_textView"
+        app:layout_constraintLeft_toRightOf="@+id/view_recording_list_item_row_remaining_time_textView"
         app:layout_constraintRight_toRightOf="@+id/view_recording_list_item_row_seekBar"
-        app:layout_constraintTop_toTopOf="@+id/view_recording_list_item_row_current_time_remaining_time_textView" />
+        app:layout_constraintTop_toTopOf="@+id/view_recording_list_item_row_remaining_time_textView" />
 
     <TextView
-        android:id="@+id/view_recording_list_item_row_current_time_remaining_time_textView"
+        android:id="@+id/view_recording_list_item_row_remaining_time_textView"
         android:layout_width="0dp"
         android:layout_height="20dp"
         android:layout_marginTop="8dp"
@@ -52,15 +52,15 @@
         android:singleLine="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintLeft_toLeftOf="@+id/view_recording_list_item_row_current_time_remaining_time_textView"
+        app:layout_constraintLeft_toLeftOf="@+id/view_recording_list_item_row_seekBar"
         app:layout_constraintRight_toRightOf="@+id/view_recording_list_item_row_playPauseButton"
-        app:layout_constraintTop_toBottomOf="@+id/view_recording_list_item_row_current_time_remaining_time_textView"
+        app:layout_constraintTop_toBottomOf="@+id/view_recording_list_item_row_remaining_time_textView"
         app:layout_constraintVertical_bias="0.0" />
 
     <SeekBar
         android:id="@+id/view_recording_list_item_row_seekBar"
         android:layout_width="0dp"
-        android:layout_height="18dp"
+        android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="8dp"
@@ -69,7 +69,6 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/view_recording_list_item_row_playPauseButton"
-        app:layout_constraintTop_toTopOf="@+id/view_recording_list_item_row_playPauseButton"
-        app:layout_constraintVertical_bias="0.5" />
+        app:layout_constraintTop_toTopOf="@+id/view_recording_list_item_row_playPauseButton" />
 
 </android.support.constraint.ConstraintLayout>

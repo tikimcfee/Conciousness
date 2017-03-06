@@ -66,24 +66,36 @@ public class PersistedRecordingFileHandler {
 
     public @Nullable FileInputStream ensureAudioFileInputStream(Context context, PersistedRecording recording) {
         Timber.v("ensureAudioFileInputStream() called with: context = [" + context + "], recording = [" + recording + "]");
+        if(recording == null || context == null) {
+            return null;
+        }
         String inputStreamPath = getAudioFilePath(context, recording);
         return ensureInputStream(inputStreamPath);
     }
 
     public @Nullable FileOutputStream ensureAudioFileOutputStream(Context context, PersistedRecording recording) {
         Timber.v("ensureAudioFileOutputStream() called with: context = [" + context + "], recording = [" + recording + "]");
+        if(recording == null || context == null) {
+            return null;
+        }
         String outputStreamName = getAudioFilePath(context, recording);
         return ensureOutputStream(outputStreamName);
     }
 
     public @Nullable FileInputStream ensureModelFileInputStream(Context context, PersistedRecording recording) {
         Timber.v("ensureModelFileInputStream() called with: context = [" + context + "], recording = [" + recording + "]");
+        if(recording == null || context == null) {
+            return null;
+        }
         String inputStreamName = getModelFilePath(context, recording);
         return ensureInputStream(inputStreamName);
     }
 
     public @Nullable FileOutputStream ensureModelFileOutputStream(Context context, PersistedRecording recording) {
         Timber.v("ensureModelFileOutputStream() called with: context = [" + context + "], recording = [" + recording + "]");
+        if(recording == null || context == null) {
+            return null;
+        }
         String outputStreamName = getModelFilePath(context, recording);
         return ensureOutputStream(outputStreamName);
     }

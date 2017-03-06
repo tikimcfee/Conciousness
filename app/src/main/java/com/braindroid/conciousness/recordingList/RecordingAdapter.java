@@ -57,7 +57,7 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
             listViewModel = RecordingTransformer.toViewModel(toBind);
             viewModelLruCache.put(id, listViewModel);
         }
-        holder.bind(listViewModel);
+        holder.bind(listViewModel, toBind);
     }
 
     @Override

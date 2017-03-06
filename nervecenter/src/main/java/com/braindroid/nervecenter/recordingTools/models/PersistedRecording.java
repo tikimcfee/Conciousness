@@ -111,4 +111,14 @@ public class PersistedRecording implements Recording {
         }
     }
 
+
+    @Override
+    public String toString() {
+        return "PersistedRecording{" +
+                "name='" + name + '\'' +
+                ", systemMetaImpl=" + systemMetaImpl +
+                ", userMetaImpl=" + userMetaImpl +
+                ", tagsImpl=" + tagsImpl +
+                '}';
+    }
 }

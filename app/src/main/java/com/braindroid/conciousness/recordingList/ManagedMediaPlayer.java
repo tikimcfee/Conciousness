@@ -26,6 +26,11 @@ public class ManagedMediaPlayer
     private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
     private final Context context;
     private int currentRecordingDuration;
+    private volatile boolean isPrepared = false;
+
+    private MediaPlayer.OnPreparedListener onPreparedListener = null;
+    private MediaPlayer.OnSeekCompleteListener onSeekCompleteListener = null;
+    private MediaPlayer.OnCompletionListener onCompletionListener = null;
 
 //    private final Handler backgroundHandler;
 
@@ -44,14 +49,31 @@ public class ManagedMediaPlayer
         mediaPlayer.setOnSeekCompleteListener(this);
     }
 
+    public boolean isReady() {
+        return currentRecording != null && isPrepared;
+    }
+
+    public void setOnPreparedListener(MediaPlayer.OnPreparedListener onPreparedListener) {
+        this.onPreparedListener = onPreparedListener;
+    }
+
+    public void setOnSeekCompleteListener(MediaPlayer.OnSeekCompleteListener onSeekCompleteListener) {
+        this.onSeekCompleteListener = onSeekCompleteListener;
+    }
+
+    public void setOnCompletionListener(MediaPlayer.OnCompletionListener onCompletionListener) {
+        this.onCompletionListener = onCompletionListener;
+    }
+
     public void initializeWithRecording(PersistedRecording recording) {
         currentRecording = recording;
         currentRecordingDuration = 0;
+        isPrepared = false;
 
         if(mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
-            mediaPlayer.reset();
         }
+        mediaPlayer.reset();
 
         FileInputStream inputStream = fileHandler.ensureAudioFileInputStream(context, recording);
         if(inputStream == null) {
@@ -102,8 +124,12 @@ public class ManagedMediaPlayer
 
     public void seek(int millis) {
         mediaPlayer.seekTo(millis);
+        if(!mediaPlayer.isPlaying()) {
+            mediaPlayer.start();
+        }
     }
 
+    //region MediaRecording Callbacks
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
 
@@ -111,14 +137,16 @@ public class ManagedMediaPlayer
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-
+        if(onCompletionListener != null) {
+            onCompletionListener.onCompletion(mp);
+        }
     }
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         Timber.e("MediaPlayer error : %s / %s : %s", what, extra, mediaPlayer);
         mediaPlayer.reset();
-        currentRecordingDuration = 0;
+        reset();
         return false;
     }
 
@@ -130,10 +158,18 @@ public class ManagedMediaPlayer
     @Override
     public void onPrepared(MediaPlayer mp) {
         currentRecordingDuration = mp.getDuration();
+        isPrepared = true;
+
+        if(onPreparedListener != null) {
+            onPreparedListener.onPrepared(mp);
+        }
     }
 
     @Override
     public void onSeekComplete(MediaPlayer mp) {
-
+        if(onSeekCompleteListener != null) {
+            onSeekCompleteListener.onSeekComplete(mp);
+        }
     }
+    //endregion
 }

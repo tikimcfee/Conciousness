@@ -1,20 +1,22 @@
 package com.braindroid.conciousness.recordingList;
 
+import com.braindroid.nervecenter.recordingTools.models.Recording;
+
 public class RecordingListViewModel {
 
     private final CharSequence recordingTitle;
-    private final CharSequence topSupplementalText;
+    private final CharSequence tagInformation;
 
     private final boolean isPlayable;
 
-    public RecordingListViewModel(CharSequence recordingTitle, boolean isPlayable, CharSequence topSupplementalText) {
+    public RecordingListViewModel(CharSequence recordingTitle, boolean isPlayable, CharSequence tagInformation) {
         this.recordingTitle = recordingTitle;
         this.isPlayable = isPlayable;
-        this.topSupplementalText = topSupplementalText;
+        this.tagInformation = tagInformation;
     }
 
-    public CharSequence getTopSupplementalText() {
-        return topSupplementalText != null ? topSupplementalText : "(no info)";
+    public CharSequence getTagInformation() {
+        return tagInformation != null ? tagInformation : "(no info)";
     }
 
     public CharSequence getRecordingTitle() {
