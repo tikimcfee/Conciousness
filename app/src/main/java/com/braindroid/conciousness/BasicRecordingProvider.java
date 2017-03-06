@@ -5,7 +5,6 @@ import android.content.Context;
 import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
 import com.braindroid.nervecenter.recordingTools.RecordingProvider;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
-import com.braindroid.nervecenter.recordingTools.models.Recording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 
@@ -45,7 +44,7 @@ public class BasicRecordingProvider implements RecordingProvider {
         ensureSourcePath();
         File[] list = sourcePath.listFiles();
         if(list == null || list.length == 0) {
-            Timber.w("No files restored; %s", list);
+            Timber.w("No files restored; %s", (Object)list);
             return Collections.emptyList();
         }
 
@@ -58,16 +57,13 @@ public class BasicRecordingProvider implements RecordingProvider {
                 if(inflatedRecording == null) {
                     Timber.v("No on-disk user model found for [%s]. returning as in-memory", expectedRecording, expectedRecording.getSystemMeta());
                     restoredRecordings.add(expectedRecording);
-                    RecordingFactory.ensureStreams(context, expectedRecording);
                 } else {
                     restoredRecordings.add(inflatedRecording);
-                    RecordingFactory.ensureStreams(context, inflatedRecording);
                 }
             } else {
                 if(file.length() == 0 && !file.delete()) {
                     Timber.e("Failed to delete file with 0 length path=%s; replacing with unplayable audio file", file.getAbsolutePath());
                     PersistedRecording persistedRecording = RecordingFactory.unplayable(context);
-                    RecordingFactory.ensureStreams(context, persistedRecording);
                     restoredRecordings.add(persistedRecording);
                 }
             }
@@ -110,7 +106,6 @@ public class BasicRecordingProvider implements RecordingProvider {
     public PersistedRecording acquireNewRecording() {
         PersistedRecording recording = RecordingFactory.create(context, getFile(true).getName());
         if(context instanceof PersistingRecordingMetaWriter) {
-            RecordingFactory.ensureStreams(context, recording);
             ((PersistingRecordingMetaWriter) context).persistRecording(recording);
         }
 

@@ -1,10 +1,14 @@
 package com.braindroid.nervecenter.domainRecordingTools;
 
+import android.content.Context;
 import android.media.MediaRecorder;
+import android.support.v7.app.WindowDecorActionBar;
 
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.RecordingProvider;
+import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -21,12 +25,17 @@ public class DeviceRecorder
     private final MediaRecorder mediaRecorder;
     private final RecordingProvider recordingProvider;
     private final LinkedList<PersistedRecording> completedRecordings = new LinkedList<>();
+    private final Context context;
+
+    private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
 
     private PersistedRecording currentRecording = null;
     private boolean isRecording = false;
 
-    public DeviceRecorder(MediaRecorder mediaRecorder,
+    public DeviceRecorder(Context context,
+                          MediaRecorder mediaRecorder,
                           RecordingProvider recordingProvider) {
+        this.context = context;
         this.mediaRecorder = mediaRecorder;
         this.recordingProvider = recordingProvider;
     }
@@ -46,8 +55,14 @@ public class DeviceRecorder
             currentRecording = recordingProvider.getCurrentRecording();
         }
 
+        FileOutputStream fileOutputStream = fileHandler.ensureAudioFileOutputStream(context, currentRecording);
+        if(fileOutputStream == null) {
+            Timber.e("No FOS available for recording; will not set output fil");
+            return false;
+        }
+
         try {
-            mediaRecorder.setOutputFile(currentRecording.getAudioOutputStream().getFD());
+            mediaRecorder.setOutputFile(fileOutputStream.getFD());
         } catch (IllegalStateException e) {
             Timber.e(e, "Illegal State in initialize() : %s", currentRecording);
             e.printStackTrace();

@@ -20,12 +20,15 @@ import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
 import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
+import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.utils.ViewFinder;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.FileHandler;
 
 import timber.log.Timber;
 
@@ -35,6 +38,7 @@ public class HomeActivity extends AppCompatActivity
         implements RecordingPlayer, PersistingRecordingMetaWriter {
 
     private final Handler uiHandler = new Handler(Looper.getMainLooper());;
+    private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
 
     private DeviceRecorder deviceRecorder = null;
 
@@ -73,7 +77,7 @@ public class HomeActivity extends AppCompatActivity
         MediaRecorder mediaRecorder = new MediaRecorder();
         BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(this);
 
-        deviceRecorder = new DeviceRecorder(mediaRecorder, basicRecordingProvider);
+        deviceRecorder = new DeviceRecorder(getApplicationContext(), mediaRecorder, basicRecordingProvider);
         if(basicRecordingProvider.hasFiles()) {
             deviceRecorder.setRecordings(basicRecordingProvider.attemptRestore());
             recordingListView.setNewList(deviceRecorder.getAllRecordings());
@@ -119,16 +123,20 @@ public class HomeActivity extends AppCompatActivity
         mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
         play_recording_last_media_replayer = mp;
 
+        FileInputStream fileInputStream = fileHandler.ensureAudioFileInputStream(this, currentRecording);
+        if(fileInputStream == null) {
+            Timber.e("No FIS available for playback - %s", currentRecording);
+            return;
+        }
+
         try {
-            mp.setDataSource(currentRecording.getAudioInputStream().getFD());
+            mp.setDataSource(fileInputStream.getFD());
             Timber.v("Playing [%s]", currentRecording);
 
             mp.prepare();
             mp.start();
         } catch (IllegalStateException e) {
             Timber.e(e, "Illegal State in playRecording() - %s", currentRecording);
-            e.printStackTrace();
-            return;
         } catch (IOException e) {
             Timber.e(e, "PersistedRecording playback failed -> %s", currentRecording.toString());
         }

@@ -66,51 +66,26 @@ public class PersistedRecordingFileHandler {
 
     public @Nullable FileInputStream ensureAudioFileInputStream(Context context, PersistedRecording recording) {
         Timber.v("ensureAudioFileInputStream() called with: context = [" + context + "], recording = [" + recording + "]");
-        if(recording.getAudioInputStream() != null) {
-            return recording.getAudioInputStream();
-        }
-
-        Timber.w("No input stream available; returning default [%s]", recording);
         String inputStreamPath = getAudioFilePath(context, recording);
-        recording.setAudioInputStream(ensureInputStream(inputStreamPath));
-        return recording.getAudioInputStream();
+        return ensureInputStream(inputStreamPath);
     }
 
     public @Nullable FileOutputStream ensureAudioFileOutputStream(Context context, PersistedRecording recording) {
         Timber.v("ensureAudioFileOutputStream() called with: context = [" + context + "], recording = [" + recording + "]");
-        if(recording.getAudioOutputStream() != null) {
-            return recording.getAudioOutputStream();
-        }
-
-        Timber.w("No input stream available; returning default [%s]", recording);
         String outputStreamName = getAudioFilePath(context, recording);
-        recording.setAudioOutputStream(ensureOutputStream(outputStreamName));
-
-        return recording.getAudioOutputStream();
+        return ensureOutputStream(outputStreamName);
     }
 
     public @Nullable FileInputStream ensureModelFileInputStream(Context context, PersistedRecording recording) {
-        if(recording.getModelInputStream() != null) {
-            return recording.getModelInputStream();
-        }
-
-        Timber.w("No input stream available; returning default [%s]", recording);
+        Timber.v("ensureModelFileInputStream() called with: context = [" + context + "], recording = [" + recording + "]");
         String inputStreamName = getModelFilePath(context, recording);
-        recording.setModelInputStream(ensureInputStream(inputStreamName));
-
-        return recording.getModelInputStream();
+        return ensureInputStream(inputStreamName);
     }
 
     public @Nullable FileOutputStream ensureModelFileOutputStream(Context context, PersistedRecording recording) {
-        if(recording.getModelOutputStream() != null) {
-            return recording.getModelOutputStream();
-        }
-
-        Timber.w("No output stream available; returning default [%s]", recording);
+        Timber.v("ensureModelFileOutputStream() called with: context = [" + context + "], recording = [" + recording + "]");
         String outputStreamName = getModelFilePath(context, recording);
-        recording.setModelOutputStream(ensureOutputStream(outputStreamName));
-
-        return recording.getModelOutputStream();
+        return ensureOutputStream(outputStreamName);
     }
 
     public String getModelFilePath(Context context, PersistedRecording recording) {

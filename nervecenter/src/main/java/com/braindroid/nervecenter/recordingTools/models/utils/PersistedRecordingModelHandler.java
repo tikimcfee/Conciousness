@@ -6,7 +6,9 @@ import android.support.annotation.Nullable;
 import com.bluelinelabs.logansquare.LoganSquare;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import okio.BufferedSink;
@@ -18,10 +20,6 @@ import timber.log.Timber;
 public class PersistedRecordingModelHandler {
 
     private static PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
-
-    static {
-
-    }
 
     public static boolean hasModel(Context context, PersistedRecording recording) {
         if(!fileHandler.modelFileExists(context, recording)) {
@@ -41,11 +39,14 @@ public class PersistedRecordingModelHandler {
             return null;
         }
 
+        FileInputStream inputStream = fileHandler.ensureModelFileInputStream(context, recording);
+        if(inputStream == null) {
+            Timber.w("No Model FIS stream for %s", recording);
+            return null;
+        }
+
         try {
-            if(recording.getModelInputStream() == null) {
-                recording.setModelInputStream(fileHandler.ensureModelFileInputStream(context, recording));
-            }
-            PersistedRecording loadedRecording = LoganSquare.parse(recording.getModelInputStream(), PersistedRecording.class);
+            PersistedRecording loadedRecording = LoganSquare.parse(inputStream, PersistedRecording.class);
             Timber.v("Read [%s]", loadedRecording);
             return loadedRecording;
         } catch (FileNotFoundException e) {
@@ -59,11 +60,15 @@ public class PersistedRecordingModelHandler {
 
     public static void persistRecording(Context context, PersistedRecording recording) {
         Timber.d("persistRecording() called with: context = [" + context + "], recording = [" + recording + "]");
+
+        FileOutputStream outputStream = fileHandler.ensureModelFileOutputStream(context, recording);
+        if(outputStream == null) {
+            Timber.w("Could not write %s - no output stream", recording);
+            return;
+        }
+
         try {
-            if(recording.getModelOutputStream() == null) {
-                recording.setModelOutputStream(fileHandler.ensureModelFileOutputStream(context, recording));
-            }
-            Sink ioSink = Okio.sink(recording.getModelOutputStream());
+            Sink ioSink = Okio.sink(outputStream);
             BufferedSink buffer = Okio.buffer(ioSink);
             buffer.write(ByteString.encodeUtf8(LoganSquare.serialize(recording)));
             buffer.flush();

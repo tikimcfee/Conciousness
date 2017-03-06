@@ -1,11 +1,8 @@
 package com.braindroid.nervecenter.recordingTools.models;
 
 import com.bluelinelabs.logansquare.annotation.JsonField;
-import com.bluelinelabs.logansquare.annotation.JsonIgnore;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,18 +26,6 @@ public class PersistedRecording implements Recording {
     private List<PersistedRecordingTag> tagsImpl;
     //endregion
 
-    @JsonIgnore
-    private FileInputStream audioInputStream;
-
-    @JsonIgnore
-    private FileOutputStream audioOutputStream;
-
-    @JsonIgnore
-    private FileInputStream modelInputStream;
-
-    @JsonIgnore
-    private FileOutputStream modelOutputStream;
-
     @Override
     public String getName() {
         return name;
@@ -49,38 +34,6 @@ public class PersistedRecording implements Recording {
     @Override
     public void setName(String name) {
         this.name = name;
-    }
-
-    public FileInputStream getAudioInputStream() {
-        return audioInputStream;
-    }
-
-    public void setAudioInputStream(FileInputStream audioInputStream) {
-        this.audioInputStream = audioInputStream;
-    }
-
-    public FileOutputStream getAudioOutputStream() {
-        return audioOutputStream;
-    }
-
-    public void setAudioOutputStream(FileOutputStream audioOutputStream) {
-        this.audioOutputStream = audioOutputStream;
-    }
-
-    public FileInputStream getModelInputStream() {
-        return modelInputStream;
-    }
-
-    public void setModelInputStream(FileInputStream modelInputStream) {
-        this.modelInputStream = modelInputStream;
-    }
-
-    public FileOutputStream getModelOutputStream() {
-        return modelOutputStream;
-    }
-
-    public void setModelOutputStream(FileOutputStream modelOutputStream) {
-        this.modelOutputStream = modelOutputStream;
     }
 
     @Override
@@ -158,17 +111,4 @@ public class PersistedRecording implements Recording {
         }
     }
 
-    @Override
-    public String toString() {
-        return "PersistedRecording{" +
-                "name='" + name + '\'' +
-                ", systemMetaImpl=" + systemMetaImpl +
-                ", userMetaImpl=" + userMetaImpl +
-                ", tagsImpl=" + tagsImpl +
-                ", audioInputStream=" + audioInputStream +
-                ", audioOutputStream=" + audioOutputStream +
-                ", modelInputStream=" + modelInputStream +
-                ", modelOutputStream=" + modelOutputStream +
-                '}';
-    }
 }

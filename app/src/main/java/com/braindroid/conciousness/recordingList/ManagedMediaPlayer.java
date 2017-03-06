@@ -1,9 +1,12 @@
 package com.braindroid.conciousness.recordingList;
 
+import android.content.Context;
 import android.media.MediaPlayer;
 
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
+import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 
 import timber.log.Timber;
@@ -20,14 +23,18 @@ public class ManagedMediaPlayer
     final MediaPlayer mediaPlayer;
 
     private PersistedRecording currentRecording;
+    private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
+    private final Context context;
     private int currentRecordingDuration;
 
 //    private final Handler backgroundHandler;
 
-    public ManagedMediaPlayer() {
+    public ManagedMediaPlayer(Context context) {
 //        HandlerThread handlerThread = new HandlerThread("ManagedMediaPlayer");
 //        handlerThread.start();
 //        backgroundHandler = new Handler(handlerThread.getLooper());
+
+        this.context = context;
 
         this.mediaPlayer = new MediaPlayer();
         mediaPlayer.setOnBufferingUpdateListener(this);
@@ -46,8 +53,14 @@ public class ManagedMediaPlayer
             mediaPlayer.reset();
         }
 
+        FileInputStream inputStream = fileHandler.ensureAudioFileInputStream(context, recording);
+        if(inputStream == null) {
+            Timber.e("Could not initialize - no input stream for %s", recording);
+            return;
+        }
+
         try {
-            mediaPlayer.setDataSource(recording.getAudioInputStream().getFD());
+            mediaPlayer.setDataSource(inputStream.getFD());
         } catch (IOException e) {
             Timber.e(e, "Failed to initialize recording - %s", recording);
             e.printStackTrace();
