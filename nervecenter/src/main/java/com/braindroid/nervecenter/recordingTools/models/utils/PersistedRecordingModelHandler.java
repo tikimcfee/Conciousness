@@ -21,7 +21,7 @@ public class PersistedRecordingModelHandler {
 
     private static PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
 
-    public static boolean hasModel(Context context, PersistedRecording recording) {
+    private static boolean hasModel(Context context, PersistedRecording recording) {
         if(!fileHandler.modelFileExists(context, recording)) {
             return false;
         }
@@ -33,8 +33,8 @@ public class PersistedRecordingModelHandler {
         return true;
     }
 
-    public static @Nullable
-    PersistedRecording readPersistedRecordingModel(Context context, PersistedRecording recording) {
+    @Nullable
+    public static PersistedRecording readPersistedRecordingModel(Context context, PersistedRecording recording) {
         if(!hasModel(context, recording)) {
             return null;
         }
@@ -79,9 +79,5 @@ public class PersistedRecordingModelHandler {
         } catch (IOException e) {
             Timber.e(e, "Unknown IOException - %s->", recording, recording.getSystemMeta());
         }
-    }
-
-    static {
-
     }
 }

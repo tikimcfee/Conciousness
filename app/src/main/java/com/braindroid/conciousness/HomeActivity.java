@@ -18,17 +18,16 @@ import android.widget.Toast;
 
 import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
-import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
 import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
+import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
-import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.utils.ViewFinder;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.FileHandler;
 
 import timber.log.Timber;
 

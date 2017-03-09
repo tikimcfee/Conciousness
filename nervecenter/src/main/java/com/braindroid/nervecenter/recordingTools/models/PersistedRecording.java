@@ -97,6 +97,8 @@ public class PersistedRecording implements Recording {
     public void setTags(List<Tag> tags) {
         if(this.tagsImpl == null) {
             this.tagsImpl = new ArrayList<>();
+        } else {
+            tagsImpl.clear();
         }
 
         if(tags == null) {

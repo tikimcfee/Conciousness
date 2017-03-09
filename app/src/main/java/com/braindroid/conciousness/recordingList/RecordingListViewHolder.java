@@ -1,6 +1,5 @@
 package com.braindroid.conciousness.recordingList;
 
-import android.media.MediaPlayer;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +10,6 @@ import android.widget.TextView;
 
 import com.braindroid.conciousness.R;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
-import com.braindroid.nervecenter.recordingTools.models.Recording;
 import com.braindroid.nervecenter.utils.ViewFinder;
 
 import timber.log.Timber;

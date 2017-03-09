@@ -40,7 +40,7 @@ public class PersistedRecordingFileHandler {
         return file != null && file.exists();
     }
 
-    private  @Nullable FileInputStream ensureInputStream(final String targetFilePath) {
+    private @Nullable FileInputStream ensureInputStream(final String targetFilePath) {
         Timber.w("Creating input stream [%s]", targetFilePath);
         File inputFile = create(targetFilePath);
         try {
@@ -52,7 +52,7 @@ public class PersistedRecordingFileHandler {
         return null;
     }
 
-    private  @Nullable FileOutputStream ensureOutputStream(final String targetFilePath) {
+    private @Nullable FileOutputStream ensureOutputStream(final String targetFilePath) {
         Timber.w("Creating output stream [%s]", targetFilePath);
         File outputFile = create(targetFilePath);
         try {
@@ -125,7 +125,7 @@ public class PersistedRecordingFileHandler {
         return expectedModelFile;
     }
 
-    public File create(String filePath) {
+    private File create(String filePath) {
         Timber.v("Vend file - %s", filePath);
         File file = new File(filePath);
         if(!file.exists()) {
