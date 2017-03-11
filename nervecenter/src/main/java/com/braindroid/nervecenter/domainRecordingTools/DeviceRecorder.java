@@ -4,9 +4,11 @@ import android.content.Context;
 import android.media.MediaRecorder;
 import android.support.v7.app.WindowDecorActionBar;
 
+import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.RecordingProvider;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
+import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,7 +22,9 @@ import static android.media.MediaRecorder.AudioSource.MIC;
 
 
 public class DeviceRecorder
-        implements MediaRecorder.OnInfoListener, MediaRecorder.OnErrorListener {
+        implements MediaRecorder.OnInfoListener,
+        MediaRecorder.OnErrorListener,
+        PersistingRecordingMetaWriter {
 
     private final MediaRecorder mediaRecorder;
     private final RecordingProvider recordingProvider;
@@ -126,6 +130,10 @@ public class DeviceRecorder
         return isRecording;
     }
 
+    public int getAmplitude() {
+        return mediaRecorder.getMaxAmplitude();
+    }
+
     public List<PersistedRecording> getAllRecordings() {
         return Collections.unmodifiableList(completedRecordings);
     }
@@ -138,19 +146,20 @@ public class DeviceRecorder
         }
     }
 
+    @Override
+    public void persistRecording(PersistedRecording persistedRecording) {
+        PersistedRecordingModelHandler.persistRecording(context, persistedRecording);
+    }
+
     //region Callbacks
     @Override
     public void onError(MediaRecorder mr, int what, int extra) {
         Timber.d("onInfo() called with: mr = [" + mr + "], what = [" + what + "], extra = [" + extra + "]");
-
-
     }
 
     @Override
     public void onInfo(MediaRecorder mr, int what, int extra) {
         Timber.d("onInfo() called with: mr = [" + mr + "], what = [" + what + "], extra = [" + extra + "]");
-
-
     }
     //endregion
 }

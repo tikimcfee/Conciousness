@@ -16,11 +16,15 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.braindroid.conciousness.recordingList.RecordingListClickListener;
 import com.braindroid.conciousness.recordingList.RecordingListView;
+import com.braindroid.conciousness.recordingTags.TagChooser;
+import com.braindroid.nervecenter.domainPlaybackTools.AudioVisualizerView;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
 import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
+import com.braindroid.nervecenter.recordingTools.models.Recording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 import com.braindroid.nervecenter.utils.ViewFinder;
@@ -34,7 +38,9 @@ import timber.log.Timber;
 import static android.support.v4.content.PermissionChecker.PERMISSION_GRANTED;
 
 public class HomeActivity extends AppCompatActivity
-        implements RecordingPlayer, PersistingRecordingMetaWriter {
+        implements RecordingPlayer,
+        PersistingRecordingMetaWriter,
+        RecordingListClickListener {
 
     private final Handler uiHandler = new Handler(Looper.getMainLooper());;
     private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
@@ -44,6 +50,7 @@ public class HomeActivity extends AppCompatActivity
     private Button centerRecordButton;
     private TextView primaryStateTextView;
     private RecordingListView recordingListView;
+    private AudioVisualizerView audioVisualizerView;
 
 
     @Override
@@ -55,6 +62,8 @@ public class HomeActivity extends AppCompatActivity
         if(Timber.treeCount() == 0) {
             Timber.plant(new Timber.DebugTree());
         }
+
+        audioVisualizerView = ViewFinder.in(this, R.id.home_activity_audio_visualizer);
 
         centerRecordButton = ViewFinder.in(this, R.id.home_activity_central_feature_button);
         centerRecordButton.setOnClickListener(new View.OnClickListener() {
@@ -72,6 +81,17 @@ public class HomeActivity extends AppCompatActivity
         });
 
         recordingListView = ViewFinder.in(this, R.id.home_activity_recording_list_view);
+        recordingListView.setClickListener(new RecordingListClickListener() {
+            @Override
+            public void onRecordingItemClicked(PersistedRecording recording, int position) {
+
+            }
+
+            @Override
+            public void onRecordingItemLongClicked(PersistedRecording recording, int position) {
+
+            }
+        });
 
         MediaRecorder mediaRecorder = new MediaRecorder();
         BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(this);
@@ -84,6 +104,22 @@ public class HomeActivity extends AppCompatActivity
         } else {
             deviceRecorder.initialize();
         }
+    }
+
+    @Override
+    public void onRecordingItemClicked(PersistedRecording recording, int position) {
+        playRecording(recording);
+    }
+
+    @Override
+    public void onRecordingItemLongClicked(final PersistedRecording recording, int position) {
+        TagChooser.getTags(this, new TagChooser.TagsCallback() {
+            @Override
+            public void onNewTags(List<Recording.Tag> tags) {
+                recording.setTags(tags);
+                persistRecording(recording);
+            }
+        });
     }
 
     private void onPrimaryStateTextViewClicked() {
@@ -107,6 +143,27 @@ public class HomeActivity extends AppCompatActivity
             }
         });
     }
+
+    private void startVisualizerUpdates() {
+        uiHandler.post(updateVisualizer);
+    }
+
+    // updates the visualizer every 50 milliseconds
+    final Runnable updateVisualizer = new Runnable() {
+        @Override
+        public void run() {
+            // if we are already recording
+            if (deviceRecorder.isRecording()) {
+                // get the current amplitude
+                int amplitude = deviceRecorder.getAmplitude();
+                audioVisualizerView.addAmplitude(amplitude); // update the VisualizeView
+                audioVisualizerView.invalidate(); // refresh the VisualizerView
+
+                // update in 40 milliseconds
+                uiHandler.postDelayed(this, 30);
+            }
+        }
+    };
 
     private MediaPlayer play_recording_last_media_replayer = null;
     @Override
@@ -185,6 +242,9 @@ public class HomeActivity extends AppCompatActivity
             Timber.v("Starting recording");
             recording = deviceRecorder.startRecording();
             primaryStateTextView.setText(recording.getName());
+
+            audioVisualizerView.clear();
+            startVisualizerUpdates();
         }
     }
 

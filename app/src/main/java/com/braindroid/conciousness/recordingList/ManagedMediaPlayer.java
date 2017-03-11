@@ -35,10 +35,6 @@ public class ManagedMediaPlayer
 //    private final Handler backgroundHandler;
 
     public ManagedMediaPlayer(Context context) {
-//        HandlerThread handlerThread = new HandlerThread("ManagedMediaPlayer");
-//        handlerThread.start();
-//        backgroundHandler = new Handler(handlerThread.getLooper());
-
         this.context = context;
 
         this.mediaPlayer = new MediaPlayer();

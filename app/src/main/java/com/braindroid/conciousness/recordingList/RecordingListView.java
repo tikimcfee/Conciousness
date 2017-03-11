@@ -27,6 +27,8 @@ public class RecordingListView extends FrameLayout
     private LinearLayoutManager linearLayoutManager;
     private RecordingAdapter recordingAdapter;
 
+    private RecordingListClickListener clickListener;
+
     public RecordingListView(@NonNull Context context) {
         super(context);
     }
@@ -37,6 +39,10 @@ public class RecordingListView extends FrameLayout
 
     public RecordingListView(@NonNull Context context, @Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    public void setClickListener(RecordingListClickListener clickListener) {
+        this.clickListener = clickListener;
     }
 
     @Override
@@ -62,22 +68,15 @@ public class RecordingListView extends FrameLayout
 
     @Override
     public void onLongClick(final PersistedRecording recording, int position) {
-        TagChooser.getTags(getContext(), new TagChooser.TagsCallback() {
-            @Override
-            public void onNewTags(List<Recording.Tag> tags) {
-                if(getContext() instanceof PersistingRecordingMetaWriter) {
-                    recording.setTags(tags);
-                    ((PersistingRecordingMetaWriter) getContext()).persistRecording(recording);
-                }
-            }
-        });
-
+        if(clickListener != null) {
+            clickListener.onRecordingItemClicked(recording, position);
+        }
     }
 
     @Override
     public void onClick(PersistedRecording recording, int position) {
-        if(getContext() instanceof RecordingPlayer) {
-            ((RecordingPlayer) getContext()).playRecording(recording);
+        if(clickListener != null) {
+            clickListener.onRecordingItemLongClicked(recording, position);
         }
     }
 
