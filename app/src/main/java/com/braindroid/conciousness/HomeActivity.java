@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.braindroid.conciousness.recordingList.RecordingListClickListener;
 import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.conciousness.recordingTags.TagChooser;
+import com.braindroid.conciousness.recordingView.RecordingViewerActivity;
 import com.braindroid.nervecenter.domainPlaybackTools.AudioVisualizerView;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
@@ -37,7 +38,7 @@ import timber.log.Timber;
 
 import static android.support.v4.content.PermissionChecker.PERMISSION_GRANTED;
 
-public class HomeActivity extends AppCompatActivity
+public class HomeActivity extends BaseActivity
         implements RecordingPlayer,
         PersistingRecordingMetaWriter,
         RecordingListClickListener {
@@ -81,17 +82,7 @@ public class HomeActivity extends AppCompatActivity
         });
 
         recordingListView = ViewFinder.in(this, R.id.home_activity_recording_list_view);
-        recordingListView.setClickListener(new RecordingListClickListener() {
-            @Override
-            public void onRecordingItemClicked(PersistedRecording recording, int position) {
-
-            }
-
-            @Override
-            public void onRecordingItemLongClicked(PersistedRecording recording, int position) {
-
-            }
-        });
+        recordingListView.setClickListener(this);
 
         MediaRecorder mediaRecorder = new MediaRecorder();
         BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(this);
@@ -101,8 +92,6 @@ public class HomeActivity extends AppCompatActivity
             deviceRecorder.setRecordings(basicRecordingProvider.attemptRestore());
             recordingListView.setNewList(deviceRecorder.getAllRecordings());
             deviceRecorder.advance();
-        } else {
-            deviceRecorder.initialize();
         }
     }
 
@@ -113,13 +102,14 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onRecordingItemLongClicked(final PersistedRecording recording, int position) {
-        TagChooser.getTags(this, new TagChooser.TagsCallback() {
-            @Override
-            public void onNewTags(List<Recording.Tag> tags) {
-                recording.setTags(tags);
-                persistRecording(recording);
-            }
-        });
+//        TagChooser.getTags(this, new TagChooser.TagsCallback() {
+//            @Override
+//            public void onNewTags(List<Recording.Tag> tags) {
+//                recording.setTags(tags);
+//                persistRecording(recording);
+//            }
+//        });
+        RecordingViewerActivity.showRecordingVisualizer(this, recording);
     }
 
     private void onPrimaryStateTextViewClicked() {
@@ -220,6 +210,8 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        deviceRecorder.initialize();
+
         if(on_record_request_code == requestCode) {
             if (grantResults[0] == PERMISSION_GRANTED) {
                 toggleAudioRecordingEnabled();

@@ -69,14 +69,14 @@ public class RecordingListView extends FrameLayout
     @Override
     public void onLongClick(final PersistedRecording recording, int position) {
         if(clickListener != null) {
-            clickListener.onRecordingItemClicked(recording, position);
+            clickListener.onRecordingItemLongClicked(recording, position);
         }
     }
 
     @Override
     public void onClick(PersistedRecording recording, int position) {
         if(clickListener != null) {
-            clickListener.onRecordingItemLongClicked(recording, position);
+            clickListener.onRecordingItemClicked(recording, position);
         }
     }
 
