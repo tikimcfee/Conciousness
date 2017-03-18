@@ -18,16 +18,22 @@ public class PersistedRecordingFileHandler {
     public static String MODEL_DIRECTORY_PATH_ROOT = "recordingData";
     public static String AUDIO_DIRECTORY_PATH_ROOT = "recordings";
 
-    public boolean recordingFileExists(Context context, PersistedRecording recording) {
-        return new File(getAudioFilePath(context, recording)).exists();
+    private final Context context;
+
+    public PersistedRecordingFileHandler(Context context) {
+        this.context = context;
     }
 
-    public boolean modelFileExists(Context context, PersistedRecording recording) {
-        return new File(getModelFilePath(context, recording)).exists();
+    public boolean recordingFileExists(PersistedRecording recording) {
+        return new File(getAudioFilePath(recording)).exists();
+    }
+
+    public boolean modelFileExists(PersistedRecording recording) {
+        return new File(getModelFilePath(recording)).exists();
     }
     
-    public boolean hasModels(Context context) {
-        File rootModelDirectory = ensureDirectoryExists(context, AUDIO_DIRECTORY_PATH_ROOT);
+    public boolean hasModels() {
+        File rootModelDirectory = ensureDirectoryExists(AUDIO_DIRECTORY_PATH_ROOT);
         if(!valid(rootModelDirectory)) {
             return false;
         }
@@ -64,55 +70,55 @@ public class PersistedRecordingFileHandler {
         return null;
     }
 
-    public @Nullable FileInputStream ensureAudioFileInputStream(Context context, PersistedRecording recording) {
+    public @Nullable FileInputStream ensureAudioFileInputStream(PersistedRecording recording) {
         Timber.v("ensureAudioFileInputStream() called with: context = [" + context + "], recording = [" + recording + "]");
         if(recording == null || context == null) {
             return null;
         }
-        String inputStreamPath = getAudioFilePath(context, recording);
+        String inputStreamPath = getAudioFilePath(recording);
         return ensureInputStream(inputStreamPath);
     }
 
-    public @Nullable FileOutputStream ensureAudioFileOutputStream(Context context, PersistedRecording recording) {
+    public @Nullable FileOutputStream ensureAudioFileOutputStream(PersistedRecording recording) {
         Timber.v("ensureAudioFileOutputStream() called with: context = [" + context + "], recording = [" + recording + "]");
         if(recording == null || context == null) {
             return null;
         }
-        String outputStreamName = getAudioFilePath(context, recording);
+        String outputStreamName = getAudioFilePath(recording);
         return ensureOutputStream(outputStreamName);
     }
 
-    public @Nullable FileInputStream ensureModelFileInputStream(Context context, PersistedRecording recording) {
+    public @Nullable FileInputStream ensureModelFileInputStream(PersistedRecording recording) {
         Timber.v("ensureModelFileInputStream() called with: context = [" + context + "], recording = [" + recording + "]");
         if(recording == null || context == null) {
             return null;
         }
-        String inputStreamName = getModelFilePath(context, recording);
+        String inputStreamName = getModelFilePath(recording);
         return ensureInputStream(inputStreamName);
     }
 
-    public @Nullable FileOutputStream ensureModelFileOutputStream(Context context, PersistedRecording recording) {
+    public @Nullable FileOutputStream ensureModelFileOutputStream(PersistedRecording recording) {
         Timber.v("ensureModelFileOutputStream() called with: context = [" + context + "], recording = [" + recording + "]");
         if(recording == null || context == null) {
             return null;
         }
-        String outputStreamName = getModelFilePath(context, recording);
+        String outputStreamName = getModelFilePath(recording);
         return ensureOutputStream(outputStreamName);
     }
 
-    public String getModelFilePath(Context context, PersistedRecording recording) {
-        ensureDirectoryExists(context, MODEL_DIRECTORY_PATH_ROOT);
+    public String getModelFilePath(PersistedRecording recording) {
+        ensureDirectoryExists(MODEL_DIRECTORY_PATH_ROOT);
         return context.getFilesDir() + File.separator + MODEL_DIRECTORY_PATH_ROOT + File.separator
                 + recording.getSystemMeta().getTargetModelIdentifier();
     }
 
-    public String getAudioFilePath(Context context, PersistedRecording recording) {
-        ensureDirectoryExists(context, AUDIO_DIRECTORY_PATH_ROOT);
+    public String getAudioFilePath(PersistedRecording recording) {
+        ensureDirectoryExists(AUDIO_DIRECTORY_PATH_ROOT);
         return context.getFilesDir() + File.separator + AUDIO_DIRECTORY_PATH_ROOT + File.separator
                 + recording.getSystemMeta().getTargetRecordingIdentifier();
     }
 
-    public File ensureDirectoryExists(Context context, String pathName) {
+    public File ensureDirectoryExists(String pathName) {
         File metaDirectory = context.getFilesDir();
         String metaPath = metaDirectory.getAbsolutePath();
         String expectedMetaPath = metaPath + File.separator + pathName;

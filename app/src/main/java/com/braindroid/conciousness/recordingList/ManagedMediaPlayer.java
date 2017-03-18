@@ -71,7 +71,7 @@ public class ManagedMediaPlayer
         }
         mediaPlayer.reset();
 
-        FileInputStream inputStream = fileHandler.ensureAudioFileInputStream(context, recording);
+        FileInputStream inputStream = fileHandler.ensureAudioFileInputStream(recording);
         if(inputStream == null) {
             Timber.e("Could not initialize - no input stream for %s", recording);
             return;

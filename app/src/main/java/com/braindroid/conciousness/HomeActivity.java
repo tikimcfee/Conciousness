@@ -1,6 +1,8 @@
 package com.braindroid.conciousness;
 
 import android.Manifest;
+import android.app.Application;
+import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
@@ -10,7 +12,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -19,7 +20,6 @@ import android.widget.Toast;
 import com.braindroid.conciousness.recordingList.RecordingListClickListener;
 import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.conciousness.recordingTags.TagChooser;
-import com.braindroid.nervecenter.domainPlaybackTools.AudioVisualizerView;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
 import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
@@ -43,14 +43,14 @@ public class HomeActivity extends BaseActivity
         RecordingListClickListener {
 
     private final Handler uiHandler = new Handler(Looper.getMainLooper());;
-    private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
 
-    private DeviceRecorder deviceRecorder = null;
+    private DeviceRecorder deviceRecorder;
+    private PersistedRecordingFileHandler fileHandler;
+    private PersistedRecordingModelHandler modelHandler;
 
     private Button centerRecordButton;
     private TextView primaryStateTextView;
     private RecordingListView recordingListView;
-    private AudioVisualizerView audioVisualizerView;
 
 
     @Override
@@ -62,8 +62,6 @@ public class HomeActivity extends BaseActivity
         if(Timber.treeCount() == 0) {
             Timber.plant(new Timber.DebugTree());
         }
-
-        audioVisualizerView = ViewFinder.in(this, R.id.home_activity_audio_visualizer);
 
         centerRecordButton = ViewFinder.in(this, R.id.home_activity_central_feature_button);
         centerRecordButton.setOnClickListener(new View.OnClickListener() {
@@ -84,9 +82,13 @@ public class HomeActivity extends BaseActivity
         recordingListView.setClickListener(this);
 
         MediaRecorder mediaRecorder = new MediaRecorder();
-        BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(this);
 
-        deviceRecorder = new DeviceRecorder(getApplicationContext(), mediaRecorder, basicRecordingProvider);
+        Context applicationContext = getApplicationContext();
+        fileHandler = new PersistedRecordingFileHandler(applicationContext);
+        modelHandler = new PersistedRecordingModelHandler(applicationContext, fileHandler);
+        BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(applicationContext, fileHandler, modelHandler);
+        deviceRecorder = new DeviceRecorder(mediaRecorder, basicRecordingProvider, fileHandler, modelHandler);
+
         if(basicRecordingProvider.hasFiles()) {
             deviceRecorder.setRecordings(basicRecordingProvider.attemptRestore());
             recordingListView.setNewList(deviceRecorder.getAllRecordings());
@@ -144,8 +146,6 @@ public class HomeActivity extends BaseActivity
             if (deviceRecorder.isRecording()) {
                 // get the current amplitude
                 int amplitude = deviceRecorder.getAmplitude();
-                audioVisualizerView.addAmplitude(amplitude); // update the VisualizeView
-                audioVisualizerView.invalidate(); // refresh the VisualizerView
 
                 // update in 40 milliseconds
                 uiHandler.postDelayed(this, 30);
@@ -167,7 +167,7 @@ public class HomeActivity extends BaseActivity
         mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
         play_recording_last_media_replayer = mp;
 
-        FileInputStream fileInputStream = fileHandler.ensureAudioFileInputStream(this, currentRecording);
+        FileInputStream fileInputStream = fileHandler.ensureAudioFileInputStream(currentRecording);
         if(fileInputStream == null) {
             Timber.e("No FIS available for playback - %s", currentRecording);
             return;
@@ -188,7 +188,7 @@ public class HomeActivity extends BaseActivity
 
     @Override
     public void persistRecording(PersistedRecording persistedRecording) {
-        PersistedRecordingModelHandler.persistRecording(this, persistedRecording);
+        modelHandler.persistRecording(persistedRecording);
         updateList();
     }
 
@@ -233,7 +233,6 @@ public class HomeActivity extends BaseActivity
             recording = deviceRecorder.startRecording();
             primaryStateTextView.setText(recording.getName());
 
-            audioVisualizerView.clear();
             startVisualizerUpdates();
         }
     }

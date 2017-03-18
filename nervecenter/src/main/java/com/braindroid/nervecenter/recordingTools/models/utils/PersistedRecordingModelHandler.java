@@ -19,14 +19,21 @@ import timber.log.Timber;
 
 public class PersistedRecordingModelHandler {
 
-    private static PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
+    private final Context context;
+    private final PersistedRecordingFileHandler fileHandler;
 
-    private static boolean hasModel(Context context, PersistedRecording recording) {
-        if(!fileHandler.modelFileExists(context, recording)) {
+    public PersistedRecordingModelHandler(Context context,
+                                          PersistedRecordingFileHandler fileHandler) {
+        this.context = context;
+        this.fileHandler = fileHandler;
+    }
+
+    private boolean hasModel(PersistedRecording recording) {
+        if(!fileHandler.modelFileExists(recording)) {
             return false;
         }
 
-        if(!fileHandler.recordingFileExists(context, recording)) {
+        if(!fileHandler.recordingFileExists(recording)) {
             return false;
         }
 
@@ -34,12 +41,12 @@ public class PersistedRecordingModelHandler {
     }
 
     @Nullable
-    public static PersistedRecording readPersistedRecordingModel(Context context, PersistedRecording recording) {
-        if(!hasModel(context, recording)) {
+    public  PersistedRecording readPersistedRecordingModel(PersistedRecording recording) {
+        if(!hasModel(recording)) {
             return null;
         }
 
-        FileInputStream inputStream = fileHandler.ensureModelFileInputStream(context, recording);
+        FileInputStream inputStream = fileHandler.ensureModelFileInputStream(recording);
         if(inputStream == null) {
             Timber.w("No Model FIS stream for %s", recording);
             return null;
@@ -58,10 +65,10 @@ public class PersistedRecordingModelHandler {
         return null;
     }
 
-    public static void persistRecording(Context context, PersistedRecording recording) {
+    public void persistRecording(PersistedRecording recording) {
         Timber.d("persistRecording() called with: context = [" + context + "], recording = [" + recording + "]");
 
-        FileOutputStream outputStream = fileHandler.ensureModelFileOutputStream(context, recording);
+        FileOutputStream outputStream = fileHandler.ensureModelFileOutputStream(recording);
         if(outputStream == null) {
             Timber.w("Could not write %s - no output stream", recording);
             return;

@@ -1,12 +1,10 @@
 package com.braindroid.nervecenter.domainRecordingTools;
 
-import android.content.Context;
 import android.media.MediaRecorder;
-import android.support.v7.app.WindowDecorActionBar;
 
 import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
-import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.RecordingProvider;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 
@@ -29,19 +27,21 @@ public class DeviceRecorder
     private final MediaRecorder mediaRecorder;
     private final RecordingProvider recordingProvider;
     private final LinkedList<PersistedRecording> completedRecordings = new LinkedList<>();
-    private final Context context;
 
-    private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
+    private final PersistedRecordingFileHandler fileHandler;
+    private final PersistedRecordingModelHandler modelHandler;
 
     private PersistedRecording currentRecording = null;
     private boolean isRecording = false;
 
-    public DeviceRecorder(Context context,
-                          MediaRecorder mediaRecorder,
-                          RecordingProvider recordingProvider) {
-        this.context = context;
+    public DeviceRecorder(MediaRecorder mediaRecorder,
+                          RecordingProvider recordingProvider,
+                          PersistedRecordingFileHandler fileHandler,
+                          PersistedRecordingModelHandler modelHandler) {
         this.mediaRecorder = mediaRecorder;
         this.recordingProvider = recordingProvider;
+        this.fileHandler = fileHandler;
+        this.modelHandler = modelHandler;
     }
 
     public boolean initialize()  {
@@ -49,7 +49,7 @@ public class DeviceRecorder
         mediaRecorder.setOnInfoListener(this);
 
         mediaRecorder.setAudioSource(MIC);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.RAW_AMR);
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         mediaRecorder.setAudioSamplingRate(44100);
         mediaRecorder.setAudioEncodingBitRate(96000);
@@ -59,7 +59,7 @@ public class DeviceRecorder
             currentRecording = recordingProvider.getCurrentRecording();
         }
 
-        FileOutputStream fileOutputStream = fileHandler.ensureAudioFileOutputStream(context, currentRecording);
+        FileOutputStream fileOutputStream = fileHandler.ensureAudioFileOutputStream(currentRecording);
         if(fileOutputStream == null) {
             Timber.e("No FOS available for recording; will not set output fil");
             return false;
@@ -148,7 +148,7 @@ public class DeviceRecorder
 
     @Override
     public void persistRecording(PersistedRecording persistedRecording) {
-        PersistedRecordingModelHandler.persistRecording(context, persistedRecording);
+        modelHandler.persistRecording(persistedRecording);
     }
 
     //region Callbacks

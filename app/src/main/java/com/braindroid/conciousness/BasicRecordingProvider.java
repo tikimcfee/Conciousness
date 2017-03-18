@@ -21,7 +21,8 @@ import static com.braindroid.nervecenter.recordingTools.models.utils.PersistedRe
 public class BasicRecordingProvider implements RecordingProvider {
 
     private final Context context;
-    private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
+    private final PersistedRecordingFileHandler fileHandler;
+    private final PersistedRecordingModelHandler modelHandler;
 
     private PersistedRecording currentRecording;
 
@@ -30,13 +31,17 @@ public class BasicRecordingProvider implements RecordingProvider {
 
     private int currentFileNumber = 0;
 
-    public BasicRecordingProvider(Context context) {
+    public BasicRecordingProvider(Context context,
+                                  PersistedRecordingFileHandler fileHandler,
+                                  PersistedRecordingModelHandler modelHandler) {
         this.context = context;
+        this.fileHandler = fileHandler;
+        this.modelHandler = modelHandler;
     }
 
     //region File handling
     public boolean hasFiles() {
-        return fileHandler.hasModels(context);
+        return fileHandler.hasModels();
     }
 
     public List<PersistedRecording> attemptRestore() {
@@ -52,7 +57,7 @@ public class BasicRecordingProvider implements RecordingProvider {
         for(File file : list) {
             if(file.length() > 0 && file.getName().endsWith(".aac")) {
                 final PersistedRecording expectedRecording = RecordingFactory.create(context, file.getName());
-                final PersistedRecording inflatedRecording = PersistedRecordingModelHandler.readPersistedRecordingModel(context, expectedRecording);
+                final PersistedRecording inflatedRecording = modelHandler.readPersistedRecordingModel(expectedRecording);
 
                 if(inflatedRecording == null) {
                     Timber.v("No on-disk user model found for [%s]. returning as in-memory", expectedRecording, expectedRecording.getSystemMeta());
@@ -77,7 +82,7 @@ public class BasicRecordingProvider implements RecordingProvider {
     }
 
     private boolean ensureSourcePath() {
-        sourcePath = fileHandler.ensureDirectoryExists(context, AUDIO_DIRECTORY_PATH_ROOT);
+        sourcePath = fileHandler.ensureDirectoryExists(AUDIO_DIRECTORY_PATH_ROOT);
         if(sourcePath.list() != null) {
             currentFileNumber = sourcePath.list().length;
         }
