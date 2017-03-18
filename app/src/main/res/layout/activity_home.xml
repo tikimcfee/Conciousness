@@ -9,7 +9,7 @@
 
     >
 
-    <com.braindroid.nervecenter.domainPlaybackTools.AudioVisualizerView
+    <com.braindroid.nervecenter.domainPlaybackTools.AudioVisualizerSurfaceView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:id="@+id/home_activity_audio_visualizer"

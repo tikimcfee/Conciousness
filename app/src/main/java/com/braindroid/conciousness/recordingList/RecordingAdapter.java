@@ -1,5 +1,6 @@
 package com.braindroid.conciousness.recordingList;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
 import android.view.ViewGroup;
@@ -27,9 +28,11 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
     private final LruCache<String, RecordingListViewModel> viewModelLruCache;
 
     private OnRecordingItemClicked onRecordingItemClicked;
+    private Context context;
 
-    public RecordingAdapter(OnRecordingItemClicked onClick) {
+    public RecordingAdapter(OnRecordingItemClicked onClick, Context context) {
         setHasStableIds(true);
+        this.context = context;
 
         this.onRecordingItemClicked = onClick;
 
@@ -96,7 +99,10 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
 
         PersistedRecording recording = recordings.get(position);
         if(longPress) {
-            onRecordingItemClicked.onLongClick(recording, position);
+//            onRecordingItemClicked.onLongClick(recording, position);
+            if(context instanceof com.braindroid.nervecenter.playbackTools.RecordingPlayer) {
+                ((com.braindroid.nervecenter.playbackTools.RecordingPlayer) context).playRecording(recording);
+            }
         } else {
             onRecordingItemClicked.onClick(recording, position);
         }

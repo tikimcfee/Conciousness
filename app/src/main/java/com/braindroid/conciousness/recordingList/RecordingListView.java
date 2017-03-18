@@ -56,7 +56,7 @@ public class RecordingListView extends FrameLayout
     private void initializeAfterViewCapture() {
         linearLayoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(linearLayoutManager);
-        recordingAdapter = new RecordingAdapter(this);
+        recordingAdapter = new RecordingAdapter(this, getContext());
         recyclerView.setAdapter(recordingAdapter);
     }
 
