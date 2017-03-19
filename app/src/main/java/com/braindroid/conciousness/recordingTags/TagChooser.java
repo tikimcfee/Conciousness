@@ -35,7 +35,7 @@ public class TagChooser {
         void onNewTags(List<Recording.Tag> tags);
     }
 
-    public static void getTags(Context context, final TagsCallback tagsCallback) {
+    public void getTags(Context context, final TagsCallback tagsCallback) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Choose Tags");
 

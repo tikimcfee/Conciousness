@@ -1,8 +1,7 @@
-package com.braindroid.conciousness;
+package com.braindroid.nervecenter.domainRecordingTools;
 
 import android.content.Context;
 
-import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
 import com.braindroid.nervecenter.recordingTools.RecordingProvider;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
@@ -23,6 +22,7 @@ public class BasicRecordingProvider implements RecordingProvider {
     private final Context context;
     private final PersistedRecordingFileHandler fileHandler;
     private final PersistedRecordingModelHandler modelHandler;
+    private final PersistedRecordingMetaFileWriter metaFileWriter;
 
     private PersistedRecording currentRecording;
 
@@ -33,10 +33,12 @@ public class BasicRecordingProvider implements RecordingProvider {
 
     public BasicRecordingProvider(Context context,
                                   PersistedRecordingFileHandler fileHandler,
-                                  PersistedRecordingModelHandler modelHandler) {
+                                  PersistedRecordingModelHandler modelHandler,
+                                  PersistedRecordingMetaFileWriter metaFileWriter) {
         this.context = context;
         this.fileHandler = fileHandler;
         this.modelHandler = modelHandler;
+        this.metaFileWriter = metaFileWriter;
     }
 
     //region File handling
@@ -110,9 +112,7 @@ public class BasicRecordingProvider implements RecordingProvider {
     @Override
     public PersistedRecording acquireNewRecording() {
         PersistedRecording recording = RecordingFactory.create(context, getFile(true).getName());
-        if(context instanceof PersistingRecordingMetaWriter) {
-            ((PersistingRecordingMetaWriter) context).persistRecording(recording);
-        }
+        modelHandler.persistRecording(recording);
 
         return currentRecording = recording;
     }

@@ -10,11 +10,9 @@ import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
 import com.braindroid.conciousness.R;
-import com.braindroid.conciousness.recordingTags.TagChooser;
-import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
-import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
+import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayerPool;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
-import com.braindroid.nervecenter.recordingTools.models.Recording;
+import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.utils.ViewFinder;
 
 import java.util.List;
@@ -27,7 +25,9 @@ public class RecordingListView extends FrameLayout
     private LinearLayoutManager linearLayoutManager;
     private RecordingAdapter recordingAdapter;
 
-    private RecordingListClickListener clickListener;
+    private ListView.Listener<PersistedRecording> clickListener;
+    private PersistedRecordingFileHandler fileHandler;
+    private ManagedMediaPlayerPool mediaPlayerPool;
 
     public RecordingListView(@NonNull Context context) {
         super(context);
@@ -41,10 +41,6 @@ public class RecordingListView extends FrameLayout
         super(context, attrs, defStyleAttr);
     }
 
-    public void setClickListener(RecordingListClickListener clickListener) {
-        this.clickListener = clickListener;
-    }
-
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
@@ -54,9 +50,13 @@ public class RecordingListView extends FrameLayout
     }
 
     private void initializeAfterViewCapture() {
+        fileHandler = new PersistedRecordingFileHandler(getContext().getApplicationContext());
+        mediaPlayerPool = new ManagedMediaPlayerPool(fileHandler);
+
+        recordingAdapter = new RecordingAdapter(this, mediaPlayerPool);
         linearLayoutManager = new LinearLayoutManager(getContext());
+
         recyclerView.setLayoutManager(linearLayoutManager);
-        recordingAdapter = new RecordingAdapter(this);
         recyclerView.setAdapter(recordingAdapter);
     }
 
@@ -67,22 +67,27 @@ public class RecordingListView extends FrameLayout
     }
 
     @Override
+    public List<PersistedRecording> getCurrentList() {
+        return recordingAdapter.getRecordings();
+    }
+
+    @Override
+    public void setOnLickListener(Listener<PersistedRecording> listener) {
+        this.clickListener = listener;
+    }
+
+    @Override
     public void onLongClick(final PersistedRecording recording, int position) {
         if(clickListener != null) {
-            clickListener.onRecordingItemLongClicked(recording, position);
+            clickListener.onLongClick(recording, position);
         }
     }
 
     @Override
     public void onClick(PersistedRecording recording, int position) {
         if(clickListener != null) {
-            clickListener.onRecordingItemClicked(recording, position);
+            clickListener.onClick(recording, position);
         }
-    }
-
-    @Override
-    public List<PersistedRecording> getCurrentList() {
-        return null;
     }
     //endregion
 }

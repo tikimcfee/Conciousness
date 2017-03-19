@@ -1,10 +1,7 @@
 package com.braindroid.conciousness;
 
 import android.Manifest;
-import android.app.Application;
 import android.content.Context;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,36 +14,30 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.braindroid.conciousness.recordingList.RecordingListClickListener;
 import com.braindroid.conciousness.recordingList.RecordingListView;
+import com.braindroid.conciousness.recordingList.RecordingListViewPresenter;
 import com.braindroid.conciousness.recordingTags.TagChooser;
+import com.braindroid.nervecenter.domainRecordingTools.BasicRecordingProvider;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
-import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
-import com.braindroid.nervecenter.playbackTools.RecordingPlayer;
+import com.braindroid.nervecenter.domainRecordingTools.PersistedRecordingMetaFileWriter;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
-import com.braindroid.nervecenter.recordingTools.models.Recording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 import com.braindroid.nervecenter.utils.ViewFinder;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.List;
 
 import timber.log.Timber;
 
 import static android.support.v4.content.PermissionChecker.PERMISSION_GRANTED;
 
-public class HomeActivity extends BaseActivity
-        implements RecordingPlayer,
-        PersistingRecordingMetaWriter,
-        RecordingListClickListener {
+public class HomeActivity extends BaseActivity {
 
-    private final Handler uiHandler = new Handler(Looper.getMainLooper());;
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());
 
     private DeviceRecorder deviceRecorder;
     private PersistedRecordingFileHandler fileHandler;
-    private PersistedRecordingModelHandler modelHandler;
+
+    private TagChooser tagChooser;
+    private RecordingListViewPresenter listViewPresenter;
 
     private Button centerRecordButton;
     private TextView primaryStateTextView;
@@ -79,50 +70,37 @@ public class HomeActivity extends BaseActivity
         });
 
         recordingListView = ViewFinder.in(this, R.id.home_activity_recording_list_view);
-        recordingListView.setClickListener(this);
+
+        tagChooser = new TagChooser();
 
         MediaRecorder mediaRecorder = new MediaRecorder();
 
         Context applicationContext = getApplicationContext();
         fileHandler = new PersistedRecordingFileHandler(applicationContext);
-        modelHandler = new PersistedRecordingModelHandler(applicationContext, fileHandler);
-        BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(applicationContext, fileHandler, modelHandler);
-        deviceRecorder = new DeviceRecorder(mediaRecorder, basicRecordingProvider, fileHandler, modelHandler);
 
-        if(basicRecordingProvider.hasFiles()) {
-            deviceRecorder.setRecordings(basicRecordingProvider.attemptRestore());
-            recordingListView.setNewList(deviceRecorder.getAllRecordings());
-            deviceRecorder.advance();
-        }
-    }
-
-    @Override
-    public void onRecordingItemClicked(PersistedRecording recording, int position) {
-        playRecording(recording);
-    }
-
-    @Override
-    public void onRecordingItemLongClicked(final PersistedRecording recording, int position) {
-        TagChooser.getTags(this, new TagChooser.TagsCallback() {
+        PersistedRecordingModelHandler modelHandler = new PersistedRecordingModelHandler(applicationContext, fileHandler);
+        modelHandler.addListener(new PersistedRecordingModelHandler.OnChangeListener() {
             @Override
-            public void onNewTags(List<Recording.Tag> tags) {
-                recording.setTags(tags);
-                persistRecording(recording);
+            public void onRecordingPersisted(PersistedRecording recording) {
+                updateList();
             }
         });
+
+        PersistedRecordingMetaFileWriter metaFileWriter = new PersistedRecordingMetaFileWriter(modelHandler);
+        BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(applicationContext, fileHandler, modelHandler, metaFileWriter);
+        deviceRecorder = new DeviceRecorder(mediaRecorder, basicRecordingProvider, fileHandler, modelHandler);
+
+        boolean didRestore = deviceRecorder.restore();
+        Timber.v("DeviceRecorder restored files - %s", didRestore);
+        if(didRestore) {
+            recordingListView.setNewList(deviceRecorder.getAllRecordings());
+        }
+
+        listViewPresenter = new RecordingListViewPresenter(this, recordingListView, deviceRecorder, new TagChooser());
     }
 
     private void onPrimaryStateTextViewClicked() {
-        List<PersistedRecording> allRecordings = deviceRecorder.getAllRecordings();
-        int size = allRecordings.size();
-        if(size == 0) {
-            Timber.e("No available file to play.");
-            return;
-        }
 
-        int lastIndex = size - 1;
-        PersistedRecording currentRecording = allRecordings.get(lastIndex);
-        playRecording(currentRecording);
     }
 
     private void updateList() {
@@ -145,52 +123,13 @@ public class HomeActivity extends BaseActivity
             // if we are already recording
             if (deviceRecorder.isRecording()) {
                 // get the current amplitude
-                int amplitude = deviceRecorder.getAmplitude();
+//                int amplitude = deviceRecorder.getAmplitude();
 
                 // update in 40 milliseconds
                 uiHandler.postDelayed(this, 30);
             }
         }
     };
-
-    private MediaPlayer play_recording_last_media_replayer = null;
-    @Override
-    public void playRecording(PersistedRecording currentRecording) {
-        Timber.v("playRecording() called with: currentRecording = [" + currentRecording + "]");
-
-        if(play_recording_last_media_replayer != null) {
-            Timber.v("Stopping %s", play_recording_last_media_replayer);
-            play_recording_last_media_replayer.stop();
-            play_recording_last_media_replayer.release();
-        }
-        MediaPlayer mp = new MediaPlayer();
-        mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        play_recording_last_media_replayer = mp;
-
-        FileInputStream fileInputStream = fileHandler.ensureAudioFileInputStream(currentRecording);
-        if(fileInputStream == null) {
-            Timber.e("No FIS available for playback - %s", currentRecording);
-            return;
-        }
-
-        try {
-            mp.setDataSource(fileInputStream.getFD());
-            Timber.v("Playing [%s]", currentRecording);
-
-            mp.prepare();
-            mp.start();
-        } catch (IllegalStateException e) {
-            Timber.e(e, "Illegal State in playRecording() - %s", currentRecording);
-        } catch (IOException e) {
-            Timber.e(e, "PersistedRecording playback failed -> %s", currentRecording.toString());
-        }
-    }
-
-    @Override
-    public void persistRecording(PersistedRecording persistedRecording) {
-        modelHandler.persistRecording(persistedRecording);
-        updateList();
-    }
 
     private final int on_record_request_code = 100;
     private void onCenterRecordButtonClicked() {

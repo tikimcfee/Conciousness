@@ -1,11 +1,14 @@
-package com.braindroid.conciousness.recordingList;
+package com.braindroid.nervecenter.playbackTools;
 
 import android.media.MediaPlayer;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Looper;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayer;
+import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
+import com.braindroid.nervecenter.recordingTools.models.Recording;
 
 import java.util.Locale;
 
@@ -54,6 +57,10 @@ public class SeekingAudioController
         managedMediaPlayer.setOnPreparedListener(this);
         managedMediaPlayer.setOnSeekCompleteListener(this);
         managedMediaPlayer.setOnCompletionListener(this);
+    }
+
+    public void setRecording(PersistedRecording recording) {
+        managedMediaPlayer.initializeWithRecording(recording);
     }
 
     public boolean isPlaying() {
@@ -136,22 +143,24 @@ public class SeekingAudioController
     private void setCurrentTimeText() {
         final int seekMillis = managedMediaPlayer.getSeekPosition();
         final int totalSeekSeconds = seekMillis / 1000;
+        final int trailingMillis = seekMillis % 1000;
         final int remainingSeekMinutes = totalSeekSeconds / 60;
         final int remainingSeconds = totalSeekSeconds % 60;
 
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format(Locale.ENGLISH, "%02d:%02d", remainingSeekMinutes, remainingSeconds));
+        builder.append(String.format(Locale.ENGLISH, "%02d:%02d:%03d", remainingSeekMinutes, remainingSeconds, trailingMillis));
         currentTimeTextView.setText(builder.toString());
     }
 
     private void setRemainingTimeText() {
-        final int seekMillis = managedMediaPlayer.getCurrentRecordingDuration() - managedMediaPlayer.getSeekPosition();
-        final int totalSeekSeconds = seekMillis / 1000;
+        final int remainingMillis = managedMediaPlayer.getCurrentRecordingDuration() - managedMediaPlayer.getSeekPosition();
+        final int totalSeekSeconds = remainingMillis / 1000;
+        final int trailingMillis = remainingMillis % 1000;
         final int remainingSeekMinutes = totalSeekSeconds / 60;
         final int remainingSeconds = totalSeekSeconds % 60;
 
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format(Locale.ENGLISH, "%02d:%02d", remainingSeekMinutes, remainingSeconds));
+        builder.append(String.format(Locale.ENGLISH, "%02d:%02d:%03d", remainingSeekMinutes, remainingSeconds, trailingMillis));
         remainingTimeTextView.setText(builder.toString());
     }
 }

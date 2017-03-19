@@ -5,6 +5,7 @@ import android.media.MediaRecorder;
 import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
 import com.braindroid.nervecenter.recordingTools.RecordingProvider;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
+import com.braindroid.nervecenter.recordingTools.models.Recording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 
@@ -25,7 +26,7 @@ public class DeviceRecorder
         PersistingRecordingMetaWriter {
 
     private final MediaRecorder mediaRecorder;
-    private final RecordingProvider recordingProvider;
+    private final BasicRecordingProvider recordingProvider;
     private final LinkedList<PersistedRecording> completedRecordings = new LinkedList<>();
 
     private final PersistedRecordingFileHandler fileHandler;
@@ -35,7 +36,7 @@ public class DeviceRecorder
     private boolean isRecording = false;
 
     public DeviceRecorder(MediaRecorder mediaRecorder,
-                          RecordingProvider recordingProvider,
+                          BasicRecordingProvider recordingProvider,
                           PersistedRecordingFileHandler fileHandler,
                           PersistedRecordingModelHandler modelHandler) {
         this.mediaRecorder = mediaRecorder;
@@ -44,12 +45,26 @@ public class DeviceRecorder
         this.modelHandler = modelHandler;
     }
 
+    public boolean restore() {
+        if(recordingProvider.hasFiles()) {
+            List<PersistedRecording> recordings = recordingProvider.attemptRestore();
+            setRecordings(recordings);
+            advance();
+            return true;
+        }
+
+        Timber.v("No files to restore; initializing.");
+        initialize();
+
+        return false;
+    }
+
     public boolean initialize()  {
         mediaRecorder.setOnErrorListener(this);
         mediaRecorder.setOnInfoListener(this);
 
         mediaRecorder.setAudioSource(MIC);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.RAW_AMR);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         mediaRecorder.setAudioSamplingRate(44100);
         mediaRecorder.setAudioEncodingBitRate(96000);

@@ -9,6 +9,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.braindroid.conciousness.R;
+import com.braindroid.conciousness.recordingTags.TagChooser;
+import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayer;
+import com.braindroid.nervecenter.playbackTools.SeekingAudioController;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.utils.ViewFinder;
 
@@ -17,7 +20,7 @@ import timber.log.Timber;
 public class RecordingListViewHolder extends RecyclerView.ViewHolder {
 
     public interface OnClick {
-        void onRecordingClicked(RecordingListViewModel viewModel, int position, boolean longPress);
+        void onRecordingClicked(RecordingListViewModel viewModel, int position, boolean longPress, SeekingAudioController seekingAudioController);
     }
 
     private final View rootLayout;
@@ -31,20 +34,19 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
     private RecordingListViewModel currentViewModel = null;
     private OnClick onClick;
 
-    private SeekingAudioController seekingAudioController;
-    private ManagedMediaPlayer mediaPlayer;
+    private final SeekingAudioController seekingAudioController;
 
-
-    public static RecordingListViewHolder create(ViewGroup parent, OnClick listener) {
+    public static RecordingListViewHolder create(ViewGroup parent, OnClick listener, ManagedMediaPlayer managedMediaPlayer) {
         return new RecordingListViewHolder(
                 LayoutInflater.from(parent.getContext()).inflate(
                         R.layout.view_recording_list_item_row, parent, false
                 ),
-                listener
+                listener,
+                managedMediaPlayer
         );
     }
 
-    private RecordingListViewHolder(View itemView, OnClick onClick) {
+    private RecordingListViewHolder(View itemView, OnClick onClick, ManagedMediaPlayer mediaPlayer) {
         super(itemView);
 
         this.rootLayout = itemView;
@@ -70,7 +72,6 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
         currentTimeTextView = ViewFinder.in(rootLayout, R.id.view_recording_list_item_row_current_time_textView);
         remainingTimeTextView = ViewFinder.in(rootLayout, R.id.view_recording_list_item_row_remaining_time_textView);
 
-        this.mediaPlayer = new ManagedMediaPlayer(itemView.getContext());
         seekingAudioController = new SeekingAudioController(
                 audioSeekBar, currentTimeTextView, remainingTimeTextView, mediaPlayer
         );
@@ -84,7 +85,7 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
         CharSequence toSet = listViewModel.getRecordingTitle() + "\n" + listViewModel.getTagInformation();
         mainTextView.setText(toSet);
 
-        mediaPlayer.initializeWithRecording(recording);
+        seekingAudioController.setRecording(recording);
     }
 
     private void onMainButtonClicked(boolean longPress) {
@@ -96,11 +97,21 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
         if(!longPress) {
             if(seekingAudioController.isPlaying()) {
                 seekingAudioController.pause();
+                setPausedUi();
             } else {
                 seekingAudioController.play();
+                setPlayingUi();
             }
         } else {
-            onClick.onRecordingClicked(currentViewModel, getAdapterPosition(), longPress);
+            onClick.onRecordingClicked(currentViewModel, getAdapterPosition(), longPress, seekingAudioController);
         }
+    }
+
+    public void setPausedUi() {
+        mainButton.setText("play");
+    }
+
+    public void setPlayingUi() {
+        mainButton.setText("pause");
     }
 }

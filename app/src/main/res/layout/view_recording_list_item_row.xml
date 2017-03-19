@@ -69,6 +69,10 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/view_recording_list_item_row_playPauseButton"
-        app:layout_constraintTop_toTopOf="@+id/view_recording_list_item_row_playPauseButton" />
+        app:layout_constraintTop_toTopOf="@+id/view_recording_list_item_row_playPauseButton"
+
+        android:thumb="@drawable/seekbar_thumb_drawable"
+        android:padding="8dp"
+        />
 
 </android.support.constraint.ConstraintLayout>

@@ -10,6 +10,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okio.BufferedSink;
 import okio.ByteString;
@@ -19,13 +21,28 @@ import timber.log.Timber;
 
 public class PersistedRecordingModelHandler {
 
+    public interface OnChangeListener {
+        void onRecordingPersisted(PersistedRecording recording);
+    }
+
     private final Context context;
     private final PersistedRecordingFileHandler fileHandler;
+
+    private final List<OnChangeListener> listenerList = new ArrayList<>();
 
     public PersistedRecordingModelHandler(Context context,
                                           PersistedRecordingFileHandler fileHandler) {
         this.context = context;
         this.fileHandler = fileHandler;
+    }
+
+    public void addListener(OnChangeListener onChangeListener) {
+        if(listenerList.contains(onChangeListener)) {
+            Timber.w("Listener already registered [%s]->[%s]", onChangeListener, this);
+            return;
+        }
+
+        listenerList.add(onChangeListener);
     }
 
     private boolean hasModel(PersistedRecording recording) {
@@ -83,8 +100,14 @@ public class PersistedRecordingModelHandler {
 
         } catch (FileNotFoundException e) {
             Timber.e(e, "No output file found - %s", recording.getSystemMeta().getTargetModelIdentifier());
+            return;
         } catch (IOException e) {
             Timber.e(e, "Unknown IOException - %s->", recording, recording.getSystemMeta());
+            return;
+        }
+
+        for(OnChangeListener onChangeListener : listenerList) {
+            onChangeListener.onRecordingPersisted(recording);
         }
     }
 }

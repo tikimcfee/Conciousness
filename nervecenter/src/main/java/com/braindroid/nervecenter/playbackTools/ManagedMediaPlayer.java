@@ -1,6 +1,5 @@
-package com.braindroid.conciousness.recordingList;
+package com.braindroid.nervecenter.playbackTools;
 
-import android.content.Context;
 import android.media.MediaPlayer;
 
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
@@ -20,11 +19,10 @@ public class ManagedMediaPlayer
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnSeekCompleteListener {
 
-    final MediaPlayer mediaPlayer;
+    private final MediaPlayer mediaPlayer;
 
     private PersistedRecording currentRecording;
-    private final PersistedRecordingFileHandler fileHandler = new PersistedRecordingFileHandler();
-    private final Context context;
+    private final PersistedRecordingFileHandler fileHandler;
     private int currentRecordingDuration;
     private volatile boolean isPrepared = false;
 
@@ -34,9 +32,8 @@ public class ManagedMediaPlayer
 
 //    private final Handler backgroundHandler;
 
-    public ManagedMediaPlayer(Context context) {
-        this.context = context;
-
+    public ManagedMediaPlayer(PersistedRecordingFileHandler fileHandler) {
+        this.fileHandler = fileHandler;
         this.mediaPlayer = new MediaPlayer();
         mediaPlayer.setOnBufferingUpdateListener(this);
         mediaPlayer.setOnErrorListener(this);
@@ -98,7 +95,7 @@ public class ManagedMediaPlayer
 
     public void pause() {
         if(!mediaPlayer.isPlaying()) {
-            Timber.w("Player already paused or stopped.");
+            Timber.d("Player already paused or stopped.");
             return;
         }
 
