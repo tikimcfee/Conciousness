@@ -57,6 +57,25 @@ public class HomeActivity extends BaseActivity {
     private WaveformSurfaceView waveformSurfaceView;
     private ScaleGestureDetector detector;
 
+    private void DEBUG() {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                while (!Thread.interrupted()) {
+//                    // Debug stuff
+//                    SystemClock.sleep(2000);
+//                }
+//            }
+//        }).start();
+        final Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                handler.postDelayed(this, 2000);
+            }
+        }, 2000);
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +90,8 @@ public class HomeActivity extends BaseActivity {
         bindViewsAndListeners();
 
         buildDependencies();
+
+        DEBUG();
     }
 
     @Override
@@ -193,16 +214,18 @@ public class HomeActivity extends BaseActivity {
 
     private final int on_record_request_code = 100;
     private void onCenterRecordButtonClicked() {
-        if(deviceRecorder == null) {
-            displayBasicMessage("Recorder unavailable.");
-            return;
-        }
+        waveformSurfaceView.startTest();
 
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
-            toggleAudioRecordingEnabled();
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
-        }
+//        if(deviceRecorder == null) {
+//            displayBasicMessage("Recorder unavailable.");
+//            return;
+//        }
+//
+//        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
+//            toggleAudioRecordingEnabled();
+//        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
+//        }
     }
     //endregion
 

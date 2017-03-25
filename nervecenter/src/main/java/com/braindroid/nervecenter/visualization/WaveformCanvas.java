@@ -10,8 +10,6 @@ import android.text.TextPaint;
 import com.braindroid.nervecenter.utils.AudioUtils;
 import com.braindroid.nervecenter.utils.SamplingUtils;
 
-import timber.log.Timber;
-
 public class WaveformCanvas {
 
     public interface CanvasSupplier {
@@ -37,15 +35,15 @@ public class WaveformCanvas {
     //endregion
 
     private void DEBUG() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (!Thread.interrupted()) {
-                    // Debug stuff
-                    SystemClock.sleep(2000);
-                }
-            }
-        }).start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                while (!Thread.interrupted()) {
+//                    // Debug stuff
+//                    SystemClock.sleep(2000);
+//                }
+//            }
+//        }).start();
     }
 
     public WaveformCanvas(CanvasSupplier canvasSupplier) {
@@ -100,6 +98,33 @@ public class WaveformCanvas {
 
         drawAxis(width, targetCanvas);
 
+    }
+
+    int counter = 0;
+    int steps = 16;
+    boolean stop = false;
+    float scale = 1.1f;
+
+    public void foo(Canvas canvas) {
+        canvas.drawColor(Color.parseColor("#009999"));
+
+        int regularWidth = canvas.getWidth();
+        int scaledWidth = Math.round(regularWidth * scale);
+        int delta = scaledWidth - regularWidth;
+
+        canvas.translate(-counter, 0);
+        rawDrawSlice(counter, counter + regularWidth, canvas.getHeight(), scaledWidth, canvas);
+
+        stop = counter >= delta;
+        counter += steps;
+
+        if(stop) {
+            counter = 0;
+            stop = false;
+            canvasSupplier.postCanvas(null);
+        } else {
+            canvasSupplier.postCanvas(canvas);
+        }
     }
 
     private void rawDrawSlice(int sliceStart, int sliceEnd, int height, int scaledViewPortWidth, final Canvas targetCanvas) {

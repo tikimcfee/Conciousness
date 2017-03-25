@@ -6,8 +6,11 @@ import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
-public class WaveformSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+public class WaveformSurfaceView extends View
+        implements SurfaceHolder.Callback,
+        WaveformCanvas.CanvasSupplier {
 
     private WaveformCanvas waveformCanvas;
 
@@ -28,18 +31,7 @@ public class WaveformSurfaceView extends SurfaceView implements SurfaceHolder.Ca
     }
 
     private void init() {
-        waveformCanvas = new WaveformCanvas(new WaveformCanvas.CanvasSupplier() {
-            @Override
-            public Canvas acquireCanvas() {
-                return getHolder().lockCanvas();
-            }
-
-            @Override
-            public void postCanvas(Canvas canvas) {
-                getHolder().unlockCanvasAndPost(canvas);
-            }
-        });
-        getHolder().addCallback(this);
+        waveformCanvas = new WaveformCanvas(this);
     }
 
     //endregion
@@ -73,8 +65,42 @@ public class WaveformSurfaceView extends SurfaceView implements SurfaceHolder.Ca
             refresh();
         }
     }
+    //endregion
 
+    boolean testing = false;
+    public void startTest() {
+        testing = true;
+        invalidate();
+    }
 
+    private Canvas myCanvas = null;
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        myCanvas = canvas;
+
+        if(testing) {
+            waveformCanvas.foo(canvas);
+        } else {
+            canvas.drawColor(Color.parseColor("#009999"));
+            waveformCanvas.updateCanvas(canvas);
+        }
+    }
+
+    //region Canvas supplier
+    @Override
+    public Canvas acquireCanvas() {
+        return myCanvas;
+    }
+
+    @Override
+    public void postCanvas(Canvas canvas) {
+        if(canvas == null) {
+            testing = false;
+        } else {
+            invalidate();
+        }
+    }
     //endregion
 
     private boolean hasData = false;
@@ -85,21 +111,11 @@ public class WaveformSurfaceView extends SurfaceView implements SurfaceHolder.Ca
 
     public void refresh() {
         // Update the display.
-        Canvas canvas = getHolder().lockCanvas();
-        if (canvas != null) {
-            drawWaveform(canvas);
-            getHolder().unlockCanvasAndPost(canvas);
-        }
+        invalidate();
     }
 
     private void drawWaveform(Canvas canvas) {
         // Clear the screen each time because SurfaceView won't do this for us.
-        canvas.drawColor(Color.parseColor("#009999"));
 
-//        float width = getWidth();
-//        float height = getHeight();
-//        float centerY = height / 2;
-
-        waveformCanvas.updateCanvas(canvas);
     }
 }
