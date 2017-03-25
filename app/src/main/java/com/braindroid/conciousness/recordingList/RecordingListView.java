@@ -55,6 +55,7 @@ public class RecordingListView extends FrameLayout
 
         recordingAdapter = new RecordingAdapter(this, mediaPlayerPool);
         linearLayoutManager = new LinearLayoutManager(getContext());
+        linearLayoutManager.setReverseLayout(true);
 
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(recordingAdapter);
