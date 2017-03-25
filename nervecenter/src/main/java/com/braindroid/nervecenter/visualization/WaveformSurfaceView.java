@@ -28,7 +28,17 @@ public class WaveformSurfaceView extends SurfaceView implements SurfaceHolder.Ca
     }
 
     private void init() {
-        waveformCanvas = new WaveformCanvas();
+        waveformCanvas = new WaveformCanvas(new WaveformCanvas.CanvasSupplier() {
+            @Override
+            public Canvas acquireCanvas() {
+                return getHolder().lockCanvas();
+            }
+
+            @Override
+            public void postCanvas(Canvas canvas) {
+                getHolder().unlockCanvasAndPost(canvas);
+            }
+        });
         getHolder().addCallback(this);
     }
 
