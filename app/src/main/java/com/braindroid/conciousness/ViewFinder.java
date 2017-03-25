@@ -1,4 +1,4 @@
-package com.braindroid.nervecenter.utils;
+package com.braindroid.conciousness;
 
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;

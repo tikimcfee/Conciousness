@@ -135,11 +135,19 @@ public class ManagedMediaPlayer
         }
     }
 
+
+    final int MAX_RETRY = 1;
+    int retries = 0;
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         Timber.e("MediaPlayer error : %s / %s : %s", what, extra, mediaPlayer);
-        mediaPlayer.reset();
-        reset();
+        if(retries < MAX_RETRY) {
+            retries++;
+            mediaPlayer.reset();
+            reset();
+        } else {
+
+        }
         return false;
     }
 

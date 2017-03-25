@@ -2,7 +2,6 @@ package com.braindroid.conciousness;
 
 import android.Manifest;
 import android.content.Context;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,13 +16,20 @@ import android.widget.Toast;
 import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.conciousness.recordingList.RecordingListViewPresenter;
 import com.braindroid.conciousness.recordingTags.TagChooser;
+import com.braindroid.nervecenter.domainRecordingTools.recordingSource.AudioRecordingHandler;
 import com.braindroid.nervecenter.domainRecordingTools.BasicRecordingProvider;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.domainRecordingTools.PersistedRecordingMetaFileWriter;
+import com.braindroid.nervecenter.playbackTools.playbackSource.PlaybackListener;
+import com.braindroid.nervecenter.playbackTools.playbackSource.PlaybackThread;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
-import com.braindroid.nervecenter.utils.ViewFinder;
+import com.braindroid.nervecenter.utils.LibConstants;
+import com.braindroid.nervecenter.utils.SampleIOHandler;
+import com.braindroid.nervecenter.visualization.WaveformView;
+
+import java.io.IOException;
 
 import timber.log.Timber;
 
@@ -42,6 +48,7 @@ public class HomeActivity extends BaseActivity {
     private Button centerRecordButton;
     private TextView primaryStateTextView;
     private RecordingListView recordingListView;
+    private WaveformView waveformView;
 
 
     @Override
@@ -53,6 +60,11 @@ public class HomeActivity extends BaseActivity {
         if(Timber.treeCount() == 0) {
             Timber.plant(new Timber.DebugTree());
         }
+
+        waveformView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view);
+        waveformView.setMode(WaveformView.MODE_PLAYBACK);
+        waveformView.setChannels(1);
+        waveformView.setSampleRate(LibConstants.SAMPLE_RATE);
 
         centerRecordButton = ViewFinder.in(this, R.id.home_activity_central_feature_button);
         centerRecordButton.setOnClickListener(new View.OnClickListener() {
@@ -73,8 +85,6 @@ public class HomeActivity extends BaseActivity {
 
         tagChooser = new TagChooser();
 
-        MediaRecorder mediaRecorder = new MediaRecorder();
-
         Context applicationContext = getApplicationContext();
         fileHandler = new PersistedRecordingFileHandler(applicationContext);
 
@@ -86,9 +96,14 @@ public class HomeActivity extends BaseActivity {
             }
         });
 
+
+
         PersistedRecordingMetaFileWriter metaFileWriter = new PersistedRecordingMetaFileWriter(modelHandler);
         BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(applicationContext, fileHandler, modelHandler, metaFileWriter);
-        deviceRecorder = new DeviceRecorder(mediaRecorder, basicRecordingProvider, fileHandler, modelHandler);
+
+
+        AudioRecordingHandler handler = new AudioRecordingHandler();
+        deviceRecorder = new DeviceRecorder(handler, basicRecordingProvider, fileHandler, modelHandler);
 
         boolean didRestore = deviceRecorder.restore();
         Timber.v("DeviceRecorder restored files - %s", didRestore);
@@ -100,7 +115,30 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void onPrimaryStateTextViewClicked() {
+        PersistedRecording persistedRecording = deviceRecorder.getLastRecording();
+        final short[] audioData;
+        try {
+            audioData = SampleIOHandler.getAudioFromPath(fileHandler.getAudioFilePath(persistedRecording));
+        } catch (IOException e) {
+            Timber.e(e, "Failed to get audio data");
+            return;
+        }
 
+//        PlaybackThread playbackThread = new PlaybackThread(audioData, new PlaybackListener() {
+//            @Override
+//            public void onProgress(int progress) {
+//                Timber.v("PlaybackThread progress : %d", progress);
+//            }
+//
+//            @Override
+//            public void onCompletion() {
+//                Timber.v("PlaybackThread COMPLETE");
+//            }
+//        });
+//        playbackThread.startPlayback();
+
+        waveformView.setSamples(audioData);
+        waveformView.invalidate();
     }
 
     private void updateList() {
@@ -164,11 +202,13 @@ public class HomeActivity extends BaseActivity {
         PersistedRecording recording;
         if(deviceRecorder.isRecording()) {
             Timber.v("Stopping recording");
+            centerRecordButton.setText(R.string.home_activity_record_button_press_to_start);
             deviceRecorder.stopRecording();
             deviceRecorder.advance();
             updateList();
         } else {
             Timber.v("Starting recording");
+            centerRecordButton.setText(R.string.home_activity_record_button_press_to_stop);
             recording = deviceRecorder.startRecording();
             primaryStateTextView.setText(recording.getName());
 

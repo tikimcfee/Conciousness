@@ -10,10 +10,10 @@ import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
 import com.braindroid.conciousness.R;
+import com.braindroid.conciousness.ViewFinder;
 import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayerPool;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
-import com.braindroid.nervecenter.utils.ViewFinder;
 
 import java.util.List;
 

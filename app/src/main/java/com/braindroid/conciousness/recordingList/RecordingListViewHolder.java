@@ -9,11 +9,10 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.braindroid.conciousness.R;
-import com.braindroid.conciousness.recordingTags.TagChooser;
+import com.braindroid.conciousness.ViewFinder;
 import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayer;
 import com.braindroid.nervecenter.playbackTools.SeekingAudioController;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
-import com.braindroid.nervecenter.utils.ViewFinder;
 
 import timber.log.Timber;
 
