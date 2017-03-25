@@ -31,6 +31,7 @@ import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecording
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 import com.braindroid.nervecenter.utils.LibConstants;
 import com.braindroid.nervecenter.utils.SampleIOHandler;
+import com.braindroid.nervecenter.visualization.WaveformSurfaceView;
 import com.braindroid.nervecenter.visualization.WaveformView;
 
 import java.io.IOException;
@@ -53,8 +54,7 @@ public class HomeActivity extends BaseActivity {
     private RecordingListView recordingListView;
 
     private int originalScrollWidth = 0;
-    private HorizontalScrollView horizontalScrollView;
-    private WaveformView waveformView;
+    private WaveformSurfaceView waveformSurfaceView;
     private ScaleGestureDetector detector;
 
 
@@ -112,10 +112,7 @@ public class HomeActivity extends BaseActivity {
 
     //region View Binding / Interactions
     private void bindViewsAndListeners() {
-        waveformView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view);
-        waveformView.setMode(WaveformView.MODE_PLAYBACK);
-        waveformView.setChannels(1);
-        waveformView.setSampleRate(LibConstants.SAMPLE_RATE);
+        waveformSurfaceView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view);
 
         centerRecordButton = ViewFinder.in(this, R.id.home_activity_central_feature_button);
         centerRecordButton.setOnClickListener(new View.OnClickListener() {
@@ -134,25 +131,10 @@ public class HomeActivity extends BaseActivity {
 
         recordingListView = ViewFinder.in(this, R.id.home_activity_recording_list_view);
 
-        horizontalScrollView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view_container_scrollView);
-        horizontalScrollView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                if(!ViewCompat.isLaidOut(horizontalScrollView)) {
-                    return;
-                }
-                horizontalScrollView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                ViewGroup.LayoutParams layoutParams = waveformView.getLayoutParams();
-                originalScrollWidth = layoutParams.width = horizontalScrollView.getWidth();
-                waveformView.setLayoutParams(layoutParams);
-            }
-        });
-
         detector = new ScaleGestureDetector(this, new ScaleGestureDetector.OnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
-                scaleWaveForm(detector.getScaleFactor());
+//                scaleWaveForm(detector.getScaleFactor());
                 return false;
             }
 
@@ -169,7 +151,7 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void scaleWaveForm(double scaleFactor) {
-        ViewGroup.LayoutParams layoutParams = waveformView.getLayoutParams();
+        ViewGroup.LayoutParams layoutParams = waveformSurfaceView.getLayoutParams();
         int proposedWidth = (int)Math.round(layoutParams.width * scaleFactor);
         if(proposedWidth <= originalScrollWidth) {
             proposedWidth = originalScrollWidth;
@@ -178,8 +160,7 @@ public class HomeActivity extends BaseActivity {
         Timber.v("Scale=%f Proposed=%d", scaleFactor, proposedWidth);
 
         layoutParams.width = proposedWidth;
-        waveformView.setLayoutParams(layoutParams);
-        horizontalScrollView.invalidate();
+        waveformSurfaceView.setLayoutParams(layoutParams);
     }
 
     private void onPrimaryStateTextViewClicked() {
@@ -205,8 +186,9 @@ public class HomeActivity extends BaseActivity {
 //        });
 //        playbackThread.startPlayback();
 
-        waveformView.setSamples(audioData);
-        waveformView.invalidate();
+        waveformSurfaceView.setAudioDetails(audioData, LibConstants.SAMPLE_RATE, 1);
+        waveformSurfaceView.refresh();
+//        waveformSurfaceView.invalidate();
     }
 
     private final int on_record_request_code = 100;
