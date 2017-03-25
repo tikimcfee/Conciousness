@@ -8,20 +8,24 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewCompat;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.conciousness.recordingList.RecordingListViewPresenter;
 import com.braindroid.conciousness.recordingTags.TagChooser;
-import com.braindroid.nervecenter.domainRecordingTools.recordingSource.AudioRecordingHandler;
 import com.braindroid.nervecenter.domainRecordingTools.BasicRecordingProvider;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.domainRecordingTools.PersistedRecordingMetaFileWriter;
-import com.braindroid.nervecenter.playbackTools.playbackSource.PlaybackListener;
-import com.braindroid.nervecenter.playbackTools.playbackSource.PlaybackThread;
+import com.braindroid.nervecenter.domainRecordingTools.recordingSource.AudioRecordingHandler;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
@@ -42,13 +46,16 @@ public class HomeActivity extends BaseActivity {
     private DeviceRecorder deviceRecorder;
     private PersistedRecordingFileHandler fileHandler;
 
-    private TagChooser tagChooser;
     private RecordingListViewPresenter listViewPresenter;
 
     private Button centerRecordButton;
     private TextView primaryStateTextView;
     private RecordingListView recordingListView;
+
+    private int originalScrollWidth = 0;
+    private HorizontalScrollView horizontalScrollView;
     private WaveformView waveformView;
+    private ScaleGestureDetector detector;
 
 
     @Override
@@ -61,6 +68,50 @@ public class HomeActivity extends BaseActivity {
             Timber.plant(new Timber.DebugTree());
         }
 
+        bindViewsAndListeners();
+
+        buildDependencies();
+    }
+
+    @Override
+    protected void onDestroy() {
+//        Sensey.getInstance().stop();
+        super.onDestroy();
+    }
+
+    //region Dependency building / field settings
+
+    private void buildDependencies() {
+        Context applicationContext = getApplicationContext();
+        fileHandler = new PersistedRecordingFileHandler(applicationContext);
+
+        PersistedRecordingModelHandler modelHandler = new PersistedRecordingModelHandler(applicationContext, fileHandler);
+        modelHandler.addListener(new PersistedRecordingModelHandler.OnChangeListener() {
+            @Override
+            public void onRecordingPersisted(PersistedRecording recording) {
+                updateList();
+            }
+        });
+
+        PersistedRecordingMetaFileWriter metaFileWriter = new PersistedRecordingMetaFileWriter(modelHandler);
+        BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(applicationContext, fileHandler, modelHandler, metaFileWriter);
+
+        AudioRecordingHandler handler = new AudioRecordingHandler();
+        deviceRecorder = new DeviceRecorder(handler, basicRecordingProvider, fileHandler, modelHandler);
+
+        boolean didRestore = deviceRecorder.restore();
+        Timber.v("DeviceRecorder restored files - %s", didRestore);
+        if(didRestore) {
+            recordingListView.setNewList(deviceRecorder.getAllRecordings());
+        }
+
+        listViewPresenter = new RecordingListViewPresenter(this, recordingListView, deviceRecorder, new TagChooser());
+    }
+
+    //endregion
+
+    //region View Binding / Interactions
+    private void bindViewsAndListeners() {
         waveformView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view);
         waveformView.setMode(WaveformView.MODE_PLAYBACK);
         waveformView.setChannels(1);
@@ -83,35 +134,52 @@ public class HomeActivity extends BaseActivity {
 
         recordingListView = ViewFinder.in(this, R.id.home_activity_recording_list_view);
 
-        tagChooser = new TagChooser();
-
-        Context applicationContext = getApplicationContext();
-        fileHandler = new PersistedRecordingFileHandler(applicationContext);
-
-        PersistedRecordingModelHandler modelHandler = new PersistedRecordingModelHandler(applicationContext, fileHandler);
-        modelHandler.addListener(new PersistedRecordingModelHandler.OnChangeListener() {
+        horizontalScrollView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view_container_scrollView);
+        horizontalScrollView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
-            public void onRecordingPersisted(PersistedRecording recording) {
-                updateList();
+            public void onGlobalLayout() {
+                if(!ViewCompat.isLaidOut(horizontalScrollView)) {
+                    return;
+                }
+                horizontalScrollView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                ViewGroup.LayoutParams layoutParams = waveformView.getLayoutParams();
+                originalScrollWidth = layoutParams.width = horizontalScrollView.getWidth();
+                waveformView.setLayoutParams(layoutParams);
             }
         });
 
+        detector = new ScaleGestureDetector(this, new ScaleGestureDetector.OnScaleGestureListener() {
+            @Override
+            public boolean onScale(ScaleGestureDetector detector) {
+                scaleWaveForm(detector.getScaleFactor());
+                return false;
+            }
 
+            @Override
+            public boolean onScaleBegin(ScaleGestureDetector detector) {
+                return true;
+            }
 
-        PersistedRecordingMetaFileWriter metaFileWriter = new PersistedRecordingMetaFileWriter(modelHandler);
-        BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(applicationContext, fileHandler, modelHandler, metaFileWriter);
+            @Override
+            public void onScaleEnd(ScaleGestureDetector detector) {
 
+            }
+        });
+    }
 
-        AudioRecordingHandler handler = new AudioRecordingHandler();
-        deviceRecorder = new DeviceRecorder(handler, basicRecordingProvider, fileHandler, modelHandler);
-
-        boolean didRestore = deviceRecorder.restore();
-        Timber.v("DeviceRecorder restored files - %s", didRestore);
-        if(didRestore) {
-            recordingListView.setNewList(deviceRecorder.getAllRecordings());
+    private void scaleWaveForm(double scaleFactor) {
+        ViewGroup.LayoutParams layoutParams = waveformView.getLayoutParams();
+        int proposedWidth = (int)Math.round(layoutParams.width * scaleFactor);
+        if(proposedWidth <= originalScrollWidth) {
+            proposedWidth = originalScrollWidth;
         }
 
-        listViewPresenter = new RecordingListViewPresenter(this, recordingListView, deviceRecorder, new TagChooser());
+        Timber.v("Scale=%f Proposed=%d", scaleFactor, proposedWidth);
+
+        layoutParams.width = proposedWidth;
+        waveformView.setLayoutParams(layoutParams);
+        horizontalScrollView.invalidate();
     }
 
     private void onPrimaryStateTextViewClicked() {
@@ -141,6 +209,21 @@ public class HomeActivity extends BaseActivity {
         waveformView.invalidate();
     }
 
+    private final int on_record_request_code = 100;
+    private void onCenterRecordButtonClicked() {
+        if(deviceRecorder == null) {
+            displayBasicMessage("Recorder unavailable.");
+            return;
+        }
+
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
+            toggleAudioRecordingEnabled();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
+        }
+    }
+    //endregion
+
     private void updateList() {
         uiHandler.post(new Runnable() {
             @Override
@@ -168,20 +251,6 @@ public class HomeActivity extends BaseActivity {
             }
         }
     };
-
-    private final int on_record_request_code = 100;
-    private void onCenterRecordButtonClicked() {
-        if(deviceRecorder == null) {
-            displayBasicMessage("Recorder unavailable.");
-            return;
-        }
-
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
-            toggleAudioRecordingEnabled();
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
-        }
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -224,5 +293,16 @@ public class HomeActivity extends BaseActivity {
     private void displayBasicMessage(CharSequence messageCharSequence) {
         Toast.makeText(this, messageCharSequence, Toast.LENGTH_LONG).show();
     }
+
+    //region Touch handling
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        detector.onTouchEvent(ev);
+        return super.dispatchTouchEvent(ev);
+    }
+
+
+    //endregion
 
 }
