@@ -35,6 +35,7 @@ import com.braindroid.nervecenter.visualization.WaveformSurfaceView;
 import com.braindroid.nervecenter.visualization.WaveformView;
 
 import java.io.IOException;
+import java.util.List;
 
 import timber.log.Timber;
 
@@ -163,8 +164,12 @@ public class HomeActivity extends BaseActivity {
         waveformSurfaceView.setLayoutParams(layoutParams);
     }
 
+    int counter = 0;
     private void onPrimaryStateTextViewClicked() {
-        PersistedRecording persistedRecording = deviceRecorder.getLastRecording();
+        List<PersistedRecording> recordingList = deviceRecorder.getAllRecordings();
+        PersistedRecording persistedRecording = recordingList.get(counter++);
+        if(counter == recordingList.size()) counter = 0;
+//        PersistedRecording persistedRecording = deviceRecorder.getLastRecording();
         final short[] audioData;
         try {
             audioData = SampleIOHandler.getAudioFromPath(fileHandler.getAudioFilePath(persistedRecording));
@@ -188,21 +193,21 @@ public class HomeActivity extends BaseActivity {
 
         waveformSurfaceView.setAudioDetails(audioData, LibConstants.SAMPLE_RATE, 1);
         waveformSurfaceView.refresh();
-//        waveformSurfaceView.invalidate();
     }
 
     private final int on_record_request_code = 100;
     private void onCenterRecordButtonClicked() {
-        if(deviceRecorder == null) {
-            displayBasicMessage("Recorder unavailable.");
-            return;
-        }
-
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
-            toggleAudioRecordingEnabled();
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
-        }
+        waveformSurfaceView.RUN_TEST();
+//        if(deviceRecorder == null) {
+//            displayBasicMessage("Recorder unavailable.");
+//            return;
+//        }
+//
+//        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
+//            toggleAudioRecordingEnabled();
+//        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
+//        }
     }
     //endregion
 

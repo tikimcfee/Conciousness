@@ -92,6 +92,10 @@ public class WaveformSurfaceView extends SurfaceView implements SurfaceHolder.Ca
         }
     }
 
+    public void RUN_TEST() {
+        waveformCanvas.RUN_TEST();
+    }
+
     private void drawWaveform(Canvas canvas) {
         // Clear the screen each time because SurfaceView won't do this for us.
         canvas.drawColor(Color.parseColor("#009999"));

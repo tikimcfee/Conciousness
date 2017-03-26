@@ -10,8 +10,6 @@ import android.text.TextPaint;
 import com.braindroid.nervecenter.utils.AudioUtils;
 import com.braindroid.nervecenter.utils.SamplingUtils;
 
-import timber.log.Timber;
-
 public class WaveformCanvas {
 
     public interface CanvasSupplier {
@@ -37,15 +35,53 @@ public class WaveformCanvas {
     //endregion
 
     private void DEBUG() {
+
+    }
+
+    private void DEBUG(final Runnable runnable) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (!Thread.interrupted()) {
                     // Debug stuff
-                    SystemClock.sleep(2000);
+                    if(runnable != null) {
+                        runnable.run();
+                        Thread.currentThread().interrupt();
+                    } else {
+                        SystemClock.sleep(2000);
+                    }
                 }
             }
         }).start();
+    }
+
+    public void RUN_TEST() {
+        DEBUG(new Runnable() {
+            @Override
+            public void run() {
+                int counter = 0;
+                int steps = 16;
+                boolean stop = false;
+                float scale = 1.4f;
+
+                while(!stop) {
+                    Canvas canvas = canvasSupplier.acquireCanvas();
+                    canvas.drawColor(Color.parseColor("#009999"));
+
+                    int regularWidth = canvas.getWidth();
+                    int scaledWidth = Math.round(regularWidth * scale);
+                    int delta = scaledWidth - regularWidth;
+
+                    canvas.translate(-counter, 0);
+                    streamPathDraw(counter, counter + regularWidth, canvas.getHeight(), scaledWidth, canvas);
+
+                    canvasSupplier.postCanvas(canvas);
+
+                    stop = counter >= delta;
+                    counter += steps;
+                }
+            }
+        });
     }
 
     public WaveformCanvas(CanvasSupplier canvasSupplier) {
@@ -100,6 +136,53 @@ public class WaveformCanvas {
 
         drawAxis(width, targetCanvas);
 
+    }
+
+    private float scaledSample(float sample, float max, float val) {
+        return (sample / max) * val;
+    }
+
+    private void streamPathDraw(int sliceStart, int sliceEnd, int height, int scaledViewPortWidth, final Canvas targetCanvas) {
+        xStep = scaledViewPortWidth / (currentSampleSetLength * 1.0f);
+        final float centerY = height / 2f;
+
+        final Path streamedMinPath = new Path();
+        final Path streamedMaxPath = new Path();
+        streamedMinPath.moveTo(0, centerY);
+        streamedMaxPath.moveTo(0, centerY);
+
+//        final SamplingUtils.StreamPairReceiver receiver = new SamplingUtils.StreamPairReceiver() {
+//            @Override
+//            public void onExtremePair(int position1, short min1, short max1, int position2, short min2, short max2) {
+//                float yPosMin1 = centerY - scaledSample(min1, Short.MAX_VALUE, centerY);
+//                float yPosMax1 = centerY - scaledSample(max1, Short.MAX_VALUE, centerY);
+//                float yPosMin2 = centerY - scaledSample(min2, Short.MAX_VALUE, centerY);
+//                float yPosMax2 = centerY - scaledSample(max2, Short.MAX_VALUE, centerY);
+//
+//                streamedMinPath.lineTo(position1, yPosMin1);
+//                streamedMinPath.lineTo(position2, yPosMin2);
+//                streamedMaxPath.lineTo(position1, yPosMax1);
+//                streamedMaxPath.lineTo(position2, yPosMax2);
+//            }
+//        };
+
+        StreamParams streamParams = new StreamParams(
+                currentAudioSampleSet, scaledViewPortWidth,
+                sliceStart, sliceEnd,
+                streamedMinPath, streamedMaxPath,
+                centerY);
+
+//        SamplingUtils.streamExtremesFromSliceIntoPaths(
+//                currentAudioSampleSet, scaledViewPortWidth,
+//                sliceStart, sliceEnd,
+//                streamedMinPath, streamedMaxPath);
+        StreamResults streamResults = SamplingUtils.streamFromParams_FLOATS(streamParams);
+
+//        targetCanvas.drawPath(streamedMinPath, waveformStrokePaint);
+//        targetCanvas.drawPath(streamedMaxPath, waveformStrokePaint);
+
+        targetCanvas.drawLines(streamResults.finalPointsMin, waveformStrokePaint);
+        targetCanvas.drawLines(streamResults.finalPointsMax, waveformStrokePaint);
     }
 
     private void rawDrawSlice(int sliceStart, int sliceEnd, int height, int scaledViewPortWidth, final Canvas targetCanvas) {
@@ -193,10 +276,6 @@ public class WaveformCanvas {
         waveformPath.close();
 
         return waveformPath;
-    }
-
-    private float scaledSample(float sample, float max, float val) {
-        return (sample / max) * val;
     }
 
     private void drawAxis(int width, Canvas targetCanvas) {
