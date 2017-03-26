@@ -73,13 +73,14 @@ public class WaveformCanvas {
                     int delta = scaledWidth - regularWidth;
 
                     canvas.translate(-counter, 0);
-                    streamPathDraw(counter, counter + regularWidth, canvas.getHeight(), scaledWidth, canvas);
+                    streamPathDrawWithCache(counter, counter + regularWidth, canvas.getHeight(), scaledWidth, canvas);
 
                     canvasSupplier.postCanvas(canvas);
 
                     stop = counter >= delta;
                     counter += steps;
                 }
+                CACHED_RESULTS = null;
             }
         });
     }
@@ -140,6 +141,38 @@ public class WaveformCanvas {
 
     private float scaledSample(float sample, float max, float val) {
         return (sample / max) * val;
+    }
+
+    private StreamResults CACHED_RESULTS = null;
+    private void streamPathDrawWithCache(int sliceStart, int sliceEnd, int height, int scaledViewPortWidth, final Canvas targetCanvas) {
+        if(CACHED_RESULTS != null) {
+
+            final int pointCount = sliceEnd - sliceStart;
+            final int interspersedPoints = pointCount - 1; // we have 1 less interspersed point than we do points
+            final int coordinateCount = pointCount * 4 + interspersedPoints * 4;
+
+            targetCanvas.drawLines(CACHED_RESULTS.finalPointsMin, sliceStart, coordinateCount - 1, waveformStrokePaint);
+            targetCanvas.drawLines(CACHED_RESULTS.finalPointsMax, sliceStart, coordinateCount - 1, waveformStrokePaint);
+
+//            StreamResults results = SamplingUtils.newResultsFromSlice(CACHED_RESULTS, sliceStart, sliceEnd);
+//            targetCanvas.drawLines(results.finalPointsMin, waveformStrokePaint);
+//            targetCanvas.drawLines(results.finalPointsMax, waveformStrokePaint);
+            return;
+        }
+
+        xStep = scaledViewPortWidth / (currentSampleSetLength * 1.0f);
+        final float centerY = height / 2f;
+
+        StreamParams streamParams = new StreamParams(
+                currentAudioSampleSet, scaledViewPortWidth,
+                sliceStart, sliceEnd,
+                null, null,
+                centerY);
+
+        CACHED_RESULTS = SamplingUtils.fullStreamFromParams_FLOATS(streamParams);
+
+        targetCanvas.drawLines(CACHED_RESULTS.finalPointsMin, waveformStrokePaint);
+        targetCanvas.drawLines(CACHED_RESULTS.finalPointsMax, waveformStrokePaint);
     }
 
     private void streamPathDraw(int sliceStart, int sliceEnd, int height, int scaledViewPortWidth, final Canvas targetCanvas) {
