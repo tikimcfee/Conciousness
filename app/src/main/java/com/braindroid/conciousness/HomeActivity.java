@@ -122,6 +122,12 @@ public class HomeActivity extends BaseActivity {
                 onCenterRecordButtonClicked();
             }
         });
+        centerRecordButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return onCenterRecordButtonLongClicked();
+            }
+        });
         primaryStateTextView = ViewFinder.in(this, R.id.home_activity_central_feature_state_info_textView);
         primaryStateTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -197,31 +203,21 @@ public class HomeActivity extends BaseActivity {
 
     private final int on_record_request_code = 100;
     private void onCenterRecordButtonClicked() {
-        if(deviceRecorder.getAllRecordings().size() > 0) {
-            waveformSurfaceView.RUN_TEST();
-        } else {
-            if(deviceRecorder == null) {
-                displayBasicMessage("Recorder unavailable.");
-                return;
-            }
-
-            if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
-                toggleAudioRecordingEnabled();
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
-            }
+        if(deviceRecorder == null) {
+            displayBasicMessage("Recorder unavailable.");
+            return;
         }
 
-//        if(deviceRecorder == null) {
-//            displayBasicMessage("Recorder unavailable.");
-//            return;
-//        }
-//
-//        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
-//            toggleAudioRecordingEnabled();
-//        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
-//        }
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
+            toggleAudioRecordingEnabled();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
+        }
+    }
+
+    private boolean onCenterRecordButtonLongClicked() {
+        waveformSurfaceView.RUN_TEST();
+        return true;
     }
     //endregion
 

@@ -4,8 +4,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.text.TextPaint;
+import android.util.Log;
 
 import com.braindroid.nervecenter.utils.AudioUtils;
 import com.braindroid.nervecenter.utils.Device;
@@ -17,6 +20,8 @@ import com.braindroid.nervecenter.utils.sampling.StreamResults;
 import com.braindroid.nervecenter.utils.sampling.strategies.CompleteStreamFromParams;
 import com.braindroid.nervecenter.utils.sampling.strategies.SimplifedStreamFromParams;
 import com.braindroid.nervecenter.utils.sampling.strategies.SlicedStreamFromParams;
+
+import java.util.Locale;
 
 public class WaveformCanvas {
 
@@ -93,6 +98,52 @@ public class WaveformCanvas {
         });
     }
 
+    private HandlerThread handlerThread = new HandlerThread("TEST_DRAW_TRANSLATION");
+    private Handler handler;
+
+    public void TEST_DRAW_TRANSLATION(final int translation) {
+        if(handler == null) {
+            handlerThread.start();
+            handler = new Handler(handlerThread.getLooper());
+        }
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                float scale = 4f;
+
+                Canvas canvas = canvasSupplier.acquireCanvas();
+
+                canvas.drawColor(Color.parseColor("#009999"));
+
+                int regularWidth = canvas.getWidth();
+                int scaledWidth = Math.round(regularWidth * scale);
+
+                String log = String.format(Locale.ENGLISH,
+                        "[%d] translation = %d scaledT = %f",
+                        scaledWidth, translation, translation / scale
+                );
+
+                Log.v("TRANSLATION", log);
+
+//                if(translation <= -scaledWidth) {
+//                    canvasSupplier.postCanvas(canvas);
+//                    return;
+//                }
+
+//                canvas.translate(translation / scale, 0);
+                simplifiedDrawPath(-translation, -translation + regularWidth, canvas.getHeight(), scaledWidth, canvas);
+
+                canvasSupplier.postCanvas(canvas);
+            }
+        });
+    }
+
+    public void clearCaches() {
+        lastPath = null;
+        CACHED_RESULTS = null;
+    }
+
     public WaveformCanvas(CanvasSupplier canvasSupplier) {
         this.canvasSupplier = canvasSupplier;
 
@@ -151,17 +202,25 @@ public class WaveformCanvas {
         return (sample / max) * val;
     }
 
+    private Path lastPath = null;
     private void simplifiedDrawPath(int sliceStart, int sliceEnd, int height, int scaledViewPortWidth, final Canvas targetCanvas) {
+        if(lastPath != null) {
+            Path newPath = new Path();
+            lastPath.offset(-sliceStart, 0, newPath);
+            targetCanvas.drawPath(newPath, waveformStrokePaint);
+            return;
+        }
+
         xStep = scaledViewPortWidth / (currentSampleSetLength * 1.0f);
         final float centerY = height / 2f;
 
         CompressedStreamParams streamParams = new CompressedStreamParams(
                 currentAudioSampleSet, scaledViewPortWidth,
-                sliceStart, sliceEnd,
+                0, scaledViewPortWidth,
                 centerY);
         streamParams.samplesToSkip = 4 * 2;
 
-        Path simplifiedStream = SimplifedStreamFromParams.simplifyStream(streamParams);
+        Path simplifiedStream  = lastPath = SimplifedStreamFromParams.simplifyStream(streamParams);
         targetCanvas.drawPath(simplifiedStream, waveformStrokePaint);
     }
 
