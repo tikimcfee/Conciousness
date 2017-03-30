@@ -9,7 +9,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.braindroid.conciousness.R;
-import com.braindroid.conciousness.ViewFinder;
+import com.braindroid.nervecenter.utils.ViewFinder;
 import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayer;
 import com.braindroid.nervecenter.playbackTools.SeekingAudioController;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;

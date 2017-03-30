@@ -1,21 +1,15 @@
 package com.braindroid.conciousness;
 
-import android.Manifest;
 import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewCompat;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
-import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,8 +25,8 @@ import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecording
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 import com.braindroid.nervecenter.utils.LibConstants;
 import com.braindroid.nervecenter.utils.SampleIOHandler;
+import com.braindroid.nervecenter.utils.ViewFinder;
 import com.braindroid.nervecenter.visualization.WaveformSurfaceView;
-import com.braindroid.nervecenter.visualization.WaveformView;
 
 import java.io.IOException;
 import java.util.List;
