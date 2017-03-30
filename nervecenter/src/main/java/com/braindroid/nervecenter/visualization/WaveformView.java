@@ -9,15 +9,12 @@ import android.graphics.Path;
 import android.graphics.Picture;
 import android.graphics.Rect;
 import android.os.Build;
-import android.support.v4.view.GestureDetectorCompat;
 import android.text.TextPaint;
 import android.util.AttributeSet;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 
 import com.braindroid.nervecenter.utils.AudioUtils;
-import com.braindroid.nervecenter.utils.SamplingUtils;
+import com.braindroid.nervecenter.utils.sampling.SamplingUtils;
 
 import java.util.LinkedList;
 

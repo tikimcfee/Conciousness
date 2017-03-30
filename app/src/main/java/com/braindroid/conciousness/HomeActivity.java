@@ -197,7 +197,21 @@ public class HomeActivity extends BaseActivity {
 
     private final int on_record_request_code = 100;
     private void onCenterRecordButtonClicked() {
-        waveformSurfaceView.RUN_TEST();
+        if(deviceRecorder.getAllRecordings().size() > 0) {
+            waveformSurfaceView.RUN_TEST();
+        } else {
+            if(deviceRecorder == null) {
+                displayBasicMessage("Recorder unavailable.");
+                return;
+            }
+
+            if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PERMISSION_GRANTED) {
+                toggleAudioRecordingEnabled();
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, on_record_request_code);
+            }
+        }
+
 //        if(deviceRecorder == null) {
 //            displayBasicMessage("Recorder unavailable.");
 //            return;

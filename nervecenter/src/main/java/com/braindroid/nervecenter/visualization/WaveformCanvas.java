@@ -8,7 +8,15 @@ import android.os.SystemClock;
 import android.text.TextPaint;
 
 import com.braindroid.nervecenter.utils.AudioUtils;
-import com.braindroid.nervecenter.utils.SamplingUtils;
+import com.braindroid.nervecenter.utils.Device;
+import com.braindroid.nervecenter.utils.sampling.CompressedStreamParams;
+import com.braindroid.nervecenter.utils.sampling.SamplingUtils;
+import com.braindroid.nervecenter.utils.sampling.StreamPairReceiver;
+import com.braindroid.nervecenter.utils.sampling.StreamParams;
+import com.braindroid.nervecenter.utils.sampling.StreamResults;
+import com.braindroid.nervecenter.utils.sampling.strategies.CompleteStreamFromParams;
+import com.braindroid.nervecenter.utils.sampling.strategies.SimplifedStreamFromParams;
+import com.braindroid.nervecenter.utils.sampling.strategies.SlicedStreamFromParams;
 
 public class WaveformCanvas {
 
@@ -73,14 +81,14 @@ public class WaveformCanvas {
                     int delta = scaledWidth - regularWidth;
 
                     canvas.translate(-counter, 0);
-                    streamPathDrawWithCache(counter, counter + regularWidth, canvas.getHeight(), scaledWidth, canvas);
+                    simplifiedDrawPath(counter, counter + regularWidth, canvas.getHeight(), scaledWidth, canvas);
 
                     canvasSupplier.postCanvas(canvas);
 
                     stop = counter >= delta;
                     counter += steps;
+//                    SystemClock.sleep(34);
                 }
-                CACHED_RESULTS = null;
             }
         });
     }
@@ -143,6 +151,20 @@ public class WaveformCanvas {
         return (sample / max) * val;
     }
 
+    private void simplifiedDrawPath(int sliceStart, int sliceEnd, int height, int scaledViewPortWidth, final Canvas targetCanvas) {
+        xStep = scaledViewPortWidth / (currentSampleSetLength * 1.0f);
+        final float centerY = height / 2f;
+
+        CompressedStreamParams streamParams = new CompressedStreamParams(
+                currentAudioSampleSet, scaledViewPortWidth,
+                sliceStart, sliceEnd,
+                centerY);
+        streamParams.samplesToSkip = 4 * 2;
+
+        Path simplifiedStream = SimplifedStreamFromParams.simplifyStream(streamParams);
+        targetCanvas.drawPath(simplifiedStream, waveformStrokePaint);
+    }
+
     private StreamResults CACHED_RESULTS = null;
     private void streamPathDrawWithCache(int sliceStart, int sliceEnd, int height, int scaledViewPortWidth, final Canvas targetCanvas) {
         if(CACHED_RESULTS != null) {
@@ -166,10 +188,9 @@ public class WaveformCanvas {
         StreamParams streamParams = new StreamParams(
                 currentAudioSampleSet, scaledViewPortWidth,
                 sliceStart, sliceEnd,
-                null, null,
                 centerY);
 
-        CACHED_RESULTS = SamplingUtils.fullStreamFromParams_FLOATS(streamParams);
+        CACHED_RESULTS = CompleteStreamFromParams.stream(streamParams);
 
         targetCanvas.drawLines(CACHED_RESULTS.finalPointsMin, waveformStrokePaint);
         targetCanvas.drawLines(CACHED_RESULTS.finalPointsMax, waveformStrokePaint);
@@ -202,14 +223,13 @@ public class WaveformCanvas {
         StreamParams streamParams = new StreamParams(
                 currentAudioSampleSet, scaledViewPortWidth,
                 sliceStart, sliceEnd,
-                streamedMinPath, streamedMaxPath,
                 centerY);
 
 //        SamplingUtils.streamExtremesFromSliceIntoPaths(
 //                currentAudioSampleSet, scaledViewPortWidth,
 //                sliceStart, sliceEnd,
 //                streamedMinPath, streamedMaxPath);
-        StreamResults streamResults = SamplingUtils.streamFromParams_FLOATS(streamParams);
+        StreamResults streamResults = SlicedStreamFromParams.stream(streamParams);
 
 //        targetCanvas.drawPath(streamedMinPath, waveformStrokePaint);
 //        targetCanvas.drawPath(streamedMaxPath, waveformStrokePaint);
@@ -222,7 +242,7 @@ public class WaveformCanvas {
         xStep = scaledViewPortWidth / (currentSampleSetLength * 1.0f);
         final float centerY = height / 2f;
 
-        final SamplingUtils.StreamPairReceiver receiver = new SamplingUtils.StreamPairReceiver() {
+        final StreamPairReceiver receiver = new StreamPairReceiver() {
             float lastMin = -1;
             float lastMax = -1;
             int lastPos = -1;
@@ -255,7 +275,7 @@ public class WaveformCanvas {
         xStep = width / (currentSampleSetLength * 1.0f);
         final float centerY = height / 2f;
 
-        SamplingUtils.streamExtremePairs(currentAudioSampleSet, width, new SamplingUtils.StreamPairReceiver() {
+        SamplingUtils.streamExtremePairs(currentAudioSampleSet, width, new StreamPairReceiver() {
             float lastMin = -1;
             float lastMax = -1;
             int lastPos = -1;

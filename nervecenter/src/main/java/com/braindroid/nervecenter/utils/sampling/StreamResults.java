@@ -1,4 +1,4 @@
-package com.braindroid.nervecenter.visualization;
+package com.braindroid.nervecenter.utils.sampling;
 
 public class StreamResults {
 
