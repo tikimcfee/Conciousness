@@ -8,14 +8,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewCompat;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
-import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,8 +28,7 @@ import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecording
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
 import com.braindroid.nervecenter.utils.LibConstants;
 import com.braindroid.nervecenter.utils.SampleIOHandler;
-import com.braindroid.nervecenter.visualization.WaveformSurfaceView;
-import com.braindroid.nervecenter.visualization.WaveformView;
+import com.braindroid.nervecenter.utils.sampling.strategies.WaveformTextureView;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,7 +51,7 @@ public class HomeActivity extends BaseActivity {
     private RecordingListView recordingListView;
 
     private int originalScrollWidth = 0;
-    private WaveformSurfaceView waveformSurfaceView;
+    private WaveformTextureView waveformTextureView;
     private ScaleGestureDetector detector;
 
 
@@ -113,7 +109,7 @@ public class HomeActivity extends BaseActivity {
 
     //region View Binding / Interactions
     private void bindViewsAndListeners() {
-        waveformSurfaceView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view);
+        waveformTextureView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view);
 
         centerRecordButton = ViewFinder.in(this, R.id.home_activity_central_feature_button);
         centerRecordButton.setOnClickListener(new View.OnClickListener() {
@@ -158,7 +154,7 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void scaleWaveForm(double scaleFactor) {
-        ViewGroup.LayoutParams layoutParams = waveformSurfaceView.getLayoutParams();
+        ViewGroup.LayoutParams layoutParams = waveformTextureView.getLayoutParams();
         int proposedWidth = (int)Math.round(layoutParams.width * scaleFactor);
         if(proposedWidth <= originalScrollWidth) {
             proposedWidth = originalScrollWidth;
@@ -167,7 +163,7 @@ public class HomeActivity extends BaseActivity {
         Timber.v("Scale=%f Proposed=%d", scaleFactor, proposedWidth);
 
         layoutParams.width = proposedWidth;
-        waveformSurfaceView.setLayoutParams(layoutParams);
+        waveformTextureView.setLayoutParams(layoutParams);
     }
 
     int counter = 0;
@@ -197,8 +193,8 @@ public class HomeActivity extends BaseActivity {
 //        });
 //        playbackThread.startPlayback();
 
-        waveformSurfaceView.setAudioDetails(audioData, LibConstants.SAMPLE_RATE, 1);
-        waveformSurfaceView.refresh();
+        waveformTextureView.setAudioDetails(audioData, LibConstants.SAMPLE_RATE, 1);
+        waveformTextureView.refresh();
     }
 
     private final int on_record_request_code = 100;
@@ -216,7 +212,7 @@ public class HomeActivity extends BaseActivity {
     }
 
     private boolean onCenterRecordButtonLongClicked() {
-        waveformSurfaceView.RUN_TEST();
+        waveformTextureView.RUN_TEST();
         return true;
     }
     //endregion

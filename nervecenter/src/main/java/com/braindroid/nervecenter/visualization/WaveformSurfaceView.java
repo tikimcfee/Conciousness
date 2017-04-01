@@ -3,13 +3,10 @@ package com.braindroid.nervecenter.visualization;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.util.AttributeSet;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.ScrollView;
 
 public class WaveformSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
 
@@ -110,7 +107,6 @@ public class WaveformSurfaceView extends SurfaceView implements SurfaceHolder.Ca
 
     float startingXPosition = 0;
     float currentScrollPosition = 0;
-
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {

@@ -9,7 +9,7 @@
 
     >
 
-    <com.braindroid.nervecenter.visualization.WaveformSurfaceView
+    <com.braindroid.nervecenter.utils.sampling.strategies.WaveformTextureView
         android:id="@+id/home_activity_audio_waveform_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
