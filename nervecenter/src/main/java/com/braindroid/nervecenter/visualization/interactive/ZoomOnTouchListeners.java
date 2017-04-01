@@ -1,5 +1,6 @@
 package com.braindroid.nervecenter.visualization.interactive;
 
+import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.view.MotionEvent;
@@ -29,11 +30,11 @@ class ZoomOnTouchListeners implements View.OnTouchListener, ZoomState {
     private final PointF start = new PointF();
     private float right, bottom;
 
-    private final TextureView textureView;
+    private final TransformReceiver transformReceiver;
 
-    public ZoomOnTouchListeners(ZoomableTextureView zoomableTextureView) {
-        textureView = zoomableTextureView;
-        mScaleDetector = new ScaleGestureDetector(zoomableTextureView.getContext(), new ScaleListener());
+    public ZoomOnTouchListeners(TransformReceiver transformReceiver, Context context) {
+        this.transformReceiver = transformReceiver;
+        mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
     }
 
     //region Zoom State
@@ -119,8 +120,7 @@ class ZoomOnTouchListeners implements View.OnTouchListener, ZoomState {
                 mode = NONE;
                 break;
         }
-        textureView.setTransform(textureTransformMatrix);
-        textureView.invalidate();
+        transformReceiver.onNewTransform(textureTransformMatrix);
         return true;
     }
 
@@ -146,8 +146,8 @@ class ZoomOnTouchListeners implements View.OnTouchListener, ZoomState {
             }
 
             float scaleX = newScaleFactor, scaleY = newScaleFactor;
-            final int width = textureView.getWidth();
-            final int height = textureView.getHeight();
+            final int width = transformReceiver.receiverWidth();
+            final int height = transformReceiver.receiverHeight();
 
             if(!horizontalScaleEnabled) {
                 scaleX = 1;

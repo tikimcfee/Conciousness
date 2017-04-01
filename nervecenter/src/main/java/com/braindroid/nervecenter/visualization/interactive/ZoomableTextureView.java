@@ -1,12 +1,14 @@
 package com.braindroid.nervecenter.visualization.interactive;
 
 import android.content.Context;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.TextureView;
 
-public class ZoomableTextureView extends TextureView implements ZoomState {
+public class ZoomableTextureView extends TextureView
+        implements ZoomState, TransformReceiver {
 
     private static final String SUPERSTATE_KEY = "superState";
     private static final String MIN_SCALE_KEY = "minScale";
@@ -30,7 +32,7 @@ public class ZoomableTextureView extends TextureView implements ZoomState {
     }
 
     private void initView() {
-        onTouch = new ZoomOnTouchListeners(this);
+        onTouch = new ZoomOnTouchListeners(this, getContext());
         setOnTouchListener(onTouch);
     }
 
@@ -65,6 +67,27 @@ public class ZoomableTextureView extends TextureView implements ZoomState {
     public void setVerticalScaleEnabled(boolean enabled) {
         onTouch.setVerticalScaleEnabled(enabled);
     }
+
+    //endregion
+
+    //region Transform Receiver
+
+    @Override
+    public void onNewTransform(Matrix transform) {
+        setTransform(transform);
+        invalidate();
+    }
+
+    @Override
+    public int receiverHeight() {
+        return getHeight();
+    }
+
+    @Override
+    public int receiverWidth() {
+        return getWidth();
+    }
+
 
     //endregion
 
