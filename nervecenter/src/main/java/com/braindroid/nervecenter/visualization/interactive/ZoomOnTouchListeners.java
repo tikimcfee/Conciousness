@@ -3,9 +3,9 @@ package com.braindroid.nervecenter.visualization.interactive;
 import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.TextureView;
 import android.view.View;
 
 class ZoomOnTouchListeners implements View.OnTouchListener, ZoomState {
@@ -154,6 +154,10 @@ class ZoomOnTouchListeners implements View.OnTouchListener, ZoomState {
             } else {
                 right = width * saveScale - width;
             }
+
+            Log.v("ON_TOUCH", "rWidth=" + width
+                    + " right=" + right
+            );
 
             if(!verticalScaleEnabled) {
                 scaleY = 1;

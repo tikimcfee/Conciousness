@@ -88,7 +88,6 @@ public class ZoomableTextureView extends TextureView
         return getWidth();
     }
 
-
     //endregion
 
     @Override

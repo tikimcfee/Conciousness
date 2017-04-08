@@ -2,16 +2,15 @@ package com.braindroid.nervecenter.visualization;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.text.TextPaint;
-import android.util.Log;
 
 import com.braindroid.nervecenter.utils.AudioUtils;
-import com.braindroid.nervecenter.utils.Device;
 import com.braindroid.nervecenter.utils.sampling.CompressedStreamParams;
 import com.braindroid.nervecenter.utils.sampling.SamplingUtils;
 import com.braindroid.nervecenter.utils.sampling.StreamPairReceiver;
@@ -20,8 +19,7 @@ import com.braindroid.nervecenter.utils.sampling.StreamResults;
 import com.braindroid.nervecenter.utils.sampling.strategies.CompleteStreamFromParams;
 import com.braindroid.nervecenter.utils.sampling.strategies.SimplifedStreamFromParams;
 import com.braindroid.nervecenter.utils.sampling.strategies.SlicedStreamFromParams;
-
-import java.util.Locale;
+import com.braindroid.nervecenter.visualization.interactive.MatrixUtils;
 
 public class WaveformCanvas {
 
@@ -38,8 +36,12 @@ public class WaveformCanvas {
 
     //region Drawing
     private final Paint waveformFillPaint;
+
     private final Paint waveformStrokePaint;
+    private int defaultStrokeWidth = 2;
+
     private final Paint canvasTextAxisPaint;
+
     private float xStep, centerY;
     //endregion
 
@@ -47,9 +49,8 @@ public class WaveformCanvas {
     private final CanvasSupplier canvasSupplier;
     //endregion
 
-    private void DEBUG() {
-
-    }
+    private final HandlerThread handlerThread = new HandlerThread("WaveformCanvasHandlerThread");
+    private Handler handler;
 
     private void DEBUG(final Runnable runnable) {
         new Thread(new Runnable() {
@@ -98,8 +99,27 @@ public class WaveformCanvas {
         });
     }
 
-    private HandlerThread handlerThread = new HandlerThread("TEST_DRAW_TRANSLATION");
-    private Handler handler;
+    public void RUN_TEST_PAN_ZOOM(final Matrix currentTransform) {
+        if(handler == null) {
+            handlerThread.start();
+            handler = new Handler(handlerThread.getLooper());
+        }
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Canvas canvas = canvasSupplier.acquireCanvas();
+
+                waveformStrokePaint.setStrokeWidth(defaultStrokeWidth / MatrixUtils.getScaledX(currentTransform));
+                int scaledWidth = MatrixUtils.getScaledWidth(currentTransform, canvas.getWidth());
+
+                canvas.drawColor(Color.parseColor("#009999"));
+                fullWidthPathDraw_testAllLines(canvas.getHeight(), scaledWidth, canvas, currentTransform);
+
+                canvasSupplier.postCanvas(canvas);
+            }
+        });
+    }
 
     public void TEST_DRAW_TRANSLATION(final int translation) {
         if(handler == null) {
@@ -118,13 +138,6 @@ public class WaveformCanvas {
 
                 int regularWidth = canvas.getWidth();
                 int scaledWidth = Math.round(regularWidth * scale);
-
-                String log = String.format(Locale.ENGLISH,
-                        "[%d] translation = %d scaledT = %f",
-                        scaledWidth, translation, translation / scale
-                );
-
-                Log.v("TRANSLATION", log);
 
 //                if(translation <= -scaledWidth) {
 //                    canvasSupplier.postCanvas(canvas);
@@ -155,15 +168,13 @@ public class WaveformCanvas {
         waveformStrokePaint = new Paint();
         waveformStrokePaint.setColor(Color.BLACK);
         waveformStrokePaint.setStyle(Paint.Style.STROKE);
-        waveformStrokePaint.setStrokeWidth(2);
-        waveformStrokePaint.setAntiAlias(true);
+        waveformStrokePaint.setStrokeWidth(defaultStrokeWidth);
+        waveformStrokePaint.setAntiAlias(false);
 
         waveformFillPaint = new Paint();
         waveformFillPaint.setStyle(Paint.Style.FILL);
         waveformFillPaint.setAntiAlias(true);
         waveformFillPaint.setColor(Color.LTGRAY);
-
-        DEBUG();
     }
 
     public void setAudioData(short[] audioSampleSet, int sampleRate, int channels) {
@@ -202,6 +213,62 @@ public class WaveformCanvas {
         return (sample / max) * val;
     }
 
+    private Path[] lastpaths;
+    private void fullWidthPathDraw_testAllLines(int height, int scaledViewPortWidth, final Canvas targetCanvas, Matrix sourceTransform) {
+        if(lastpaths != null) {
+            for(int i = 0; i < lastpaths.length; i++) {
+                Path path = lastpaths[i];
+                path.transform(sourceTransform);
+                targetCanvas.drawPath(path, waveformStrokePaint);
+            }
+            return;
+        }
+
+//        xStep = scaledViewPortWidth / (currentSampleSetLength * 1.0f);
+        final float centerY = height / 2f;
+
+        CompressedStreamParams streamParams = new CompressedStreamParams(
+                currentAudioSampleSet, scaledViewPortWidth,
+                0, scaledViewPortWidth,
+                centerY);
+        streamParams.samplesToSkip = 1;
+        streamParams.scaleIncrement = 1 / MatrixUtils.getScaledX(sourceTransform);
+        streamParams.streamMode = CompressedStreamParams.STREAM_MODE_MIN_MAX;
+
+        Path[] simplifiedStreams = lastpaths = SimplifedStreamFromParams.unscaledStreamPath(streamParams);
+        for(int i = 0; i < simplifiedStreams.length; i++) {
+            Path path = simplifiedStreams[i];
+            path.transform(sourceTransform);
+            targetCanvas.drawPath(path, waveformStrokePaint);
+        }
+    }
+
+//    private Path fullWidthPath = null;
+    private void fullWidthPathDraw(int height, int scaledViewPortWidth, final Canvas targetCanvas, Matrix sourceTransform) {
+//        if(fullWidthPath != null) {
+//            targetCanvas.drawPath(fullWidthPath, waveformStrokePaint);
+//            return;
+//        }
+
+        xStep = scaledViewPortWidth / (currentSampleSetLength * 1.0f);
+        final float centerY = height / 2f;
+
+        CompressedStreamParams streamParams = new CompressedStreamParams(
+                currentAudioSampleSet, scaledViewPortWidth,
+                0, scaledViewPortWidth,
+                centerY);
+        streamParams.samplesToSkip = 1;
+        streamParams.scaleIncrement = 1 / MatrixUtils.getScaledX(sourceTransform);
+        streamParams.streamMode = CompressedStreamParams.STREAM_MODE_MIN_MAX;
+
+        Path[] simplifiedStreams = SimplifedStreamFromParams.simplifyStream(streamParams);
+        for(int i = 0; i < simplifiedStreams.length; i++) {
+            Path path = simplifiedStreams[i];
+            path.transform(sourceTransform);
+            targetCanvas.drawPath(path, waveformStrokePaint);
+        }
+    }
+
     private Path lastPath = null;
     private void simplifiedDrawPath(int sliceStart, int sliceEnd, int height, int scaledViewPortWidth, final Canvas targetCanvas) {
         if(lastPath != null) {
@@ -220,8 +287,9 @@ public class WaveformCanvas {
                 centerY);
         streamParams.samplesToSkip = 4 * 2;
 
-        Path simplifiedStream  = lastPath = SimplifedStreamFromParams.simplifyStream(streamParams);
-        targetCanvas.drawPath(simplifiedStream, waveformStrokePaint);
+        Path[] simplifiedStreams = SimplifedStreamFromParams.simplifyStream(streamParams);
+        lastPath = simplifiedStreams[0];
+        targetCanvas.drawPath(lastPath, waveformStrokePaint);
     }
 
     private StreamResults CACHED_RESULTS = null;

@@ -3,8 +3,10 @@ package com.braindroid.nervecenter.utils.sampling.strategies;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 
 import com.braindroid.nervecenter.visualization.WaveformCanvas;
@@ -34,7 +36,6 @@ public class WaveformTextureView extends ZoomableTextureView
         initView();
     }
 
-
     private void initView() {
         setVerticalScaleEnabled(false);
         setHorizontalScaleEnabled(true);
@@ -42,11 +43,17 @@ public class WaveformTextureView extends ZoomableTextureView
         waveformCanvas = new WaveformCanvas(this);
     }
 
-    //region Public Audio API
-
     public void RUN_TEST() {
         waveformCanvas.RUN_TEST();
     }
+
+    @Override
+    public void onNewTransform(Matrix transform) {
+        super.onNewTransform(transform);
+        waveformCanvas.RUN_TEST_PAN_ZOOM(transform);
+    }
+
+    //region Public Audio API
 
     private boolean hasData = false;
     public void setAudioDetails(short[] audioData, int sampleRate, int channels) {
@@ -75,14 +82,18 @@ public class WaveformTextureView extends ZoomableTextureView
 
     //region SurfaceTexture Listener
 
+    private int originalWidth = 0;
+    private int originalHeight = 0;
+
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-
+        originalWidth = width;
+        originalHeight = height;
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
+        Log.v("WTV-C", "sizeChanged w=" + width + " h=" + height);
     }
 
     @Override
