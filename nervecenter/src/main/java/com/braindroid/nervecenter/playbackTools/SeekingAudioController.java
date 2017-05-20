@@ -6,9 +6,7 @@ import android.os.Looper;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayer;
-import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
-import com.braindroid.nervecenter.recordingTools.models.Recording;
+import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording;
 
 import java.util.Locale;
 
@@ -24,7 +22,7 @@ public class SeekingAudioController
     private TextView currentTimeTextView;
     private TextView remainingTimeTextView;
 
-    private ManagedMediaPlayer managedMediaPlayer;
+    private com.braindroid.nervecenter.kotlinModels.playbackTools.ManagedMediaPlayer managedMediaPlayer;
     private boolean isPlaying = false;
 
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
@@ -34,7 +32,7 @@ public class SeekingAudioController
             if(isPlaying) {
                 setRemainingTimeText();
                 setCurrentTimeText();
-                seekBar.setProgress(managedMediaPlayer.getSeekPosition());
+                seekBar.setProgress(managedMediaPlayer.seekPosition());
                 uiHandler.postDelayed(this, 50);
             } else {
                 uiHandler.removeCallbacksAndMessages(null);
@@ -45,7 +43,7 @@ public class SeekingAudioController
     public SeekingAudioController(SeekBar seekBar,
                                   TextView currentTimeTextView,
                                   TextView remainingTimeTextView,
-                                  ManagedMediaPlayer managedMediaPlayer) {
+                                  com.braindroid.nervecenter.kotlinModels.playbackTools.ManagedMediaPlayer managedMediaPlayer) {
         this.seekBar = seekBar;
         this.currentTimeTextView = currentTimeTextView;
         this.remainingTimeTextView = remainingTimeTextView;
@@ -54,12 +52,12 @@ public class SeekingAudioController
         seekBar.setProgress(0);
         seekBar.setOnSeekBarChangeListener(this);
 
-        managedMediaPlayer.setOnPreparedListener(this);
-        managedMediaPlayer.setOnSeekCompleteListener(this);
-        managedMediaPlayer.setOnCompletionListener(this);
+        managedMediaPlayer.setExternalPreparedListener(this);
+        managedMediaPlayer.setExternalSeekCompleteListener(this);
+        managedMediaPlayer.setExternalOnCompletionListener(this);
     }
 
-    public void setRecording(PersistedRecording recording) {
+    public void setRecording(OnDiskRecording recording) {
         managedMediaPlayer.initializeWithRecording(recording);
     }
 
@@ -141,7 +139,7 @@ public class SeekingAudioController
     //endregion
 
     private void setCurrentTimeText() {
-        final int seekMillis = managedMediaPlayer.getSeekPosition();
+        final int seekMillis = managedMediaPlayer.seekPosition();
         final int totalSeekSeconds = seekMillis / 1000;
         final int trailingMillis = seekMillis % 1000;
         final int remainingSeekMinutes = totalSeekSeconds / 60;
@@ -153,7 +151,7 @@ public class SeekingAudioController
     }
 
     private void setRemainingTimeText() {
-        final int remainingMillis = managedMediaPlayer.getCurrentRecordingDuration() - managedMediaPlayer.getSeekPosition();
+        final int remainingMillis = managedMediaPlayer.getCurrentRecordingDuration() - managedMediaPlayer.seekPosition();
         final int totalSeekSeconds = remainingMillis / 1000;
         final int trailingMillis = remainingMillis % 1000;
         final int remainingSeekMinutes = totalSeekSeconds / 60;

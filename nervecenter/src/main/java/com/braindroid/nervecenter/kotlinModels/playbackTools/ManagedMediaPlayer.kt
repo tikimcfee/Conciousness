@@ -48,9 +48,9 @@ open class ManagedMediaPlayer(
         if(mediaPlayer.isPlaying) mediaPlayer.stop()
         mediaPlayer.reset()
 
-        recordingFileHandler.createAudioInputStream()?.let {
+        recordingFileHandler.recordingAudioFilePath()?.let {
             try {
-                mediaPlayer.setDataSource(it.fd)
+                mediaPlayer.setDataSource(it)
             } catch (e: IOException) {
                 Timber.e(e, "Failed to initialize recording=$onDiskRecording")
                 return

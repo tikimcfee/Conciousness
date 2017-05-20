@@ -11,23 +11,22 @@ import android.widget.FrameLayout;
 
 import com.braindroid.conciousness.R;
 import com.braindroid.conciousness.ViewFinder;
-import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayerPool;
-import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
-import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
+import com.braindroid.nervecenter.kotlinModels.android.AndroidDiskFileProvider;
+import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording;
+import com.braindroid.nervecenter.kotlinModels.playbackTools.ManagedMediaPlayerPool;
+import com.braindroid.nervecenter.kotlinModels.utils.OnDiskRecordingFileHandler;
 
 import java.util.List;
 
 
 public class RecordingListView extends FrameLayout
-        implements ListView<PersistedRecording>, RecordingAdapter.OnRecordingItemClicked {
+        implements ListView<OnDiskRecording>, RecordingAdapter.OnRecordingItemClicked {
 
     private RecyclerView recyclerView;
     private LinearLayoutManager linearLayoutManager;
     private RecordingAdapter recordingAdapter;
 
-    private ListView.Listener<PersistedRecording> clickListener;
-    private PersistedRecordingFileHandler fileHandler;
-    private ManagedMediaPlayerPool mediaPlayerPool;
+    private ListView.Listener<OnDiskRecording> clickListener;
 
     public RecordingListView(@NonNull Context context) {
         super(context);
@@ -50,8 +49,9 @@ public class RecordingListView extends FrameLayout
     }
 
     private void initializeAfterViewCapture() {
-        fileHandler = new PersistedRecordingFileHandler(getContext().getApplicationContext());
-        mediaPlayerPool = new ManagedMediaPlayerPool(fileHandler);
+        AndroidDiskFileProvider fileProvider = new AndroidDiskFileProvider(getContext().getApplicationContext());
+        OnDiskRecordingFileHandler recordingFileHandler = new OnDiskRecordingFileHandler(fileProvider);
+        ManagedMediaPlayerPool mediaPlayerPool = new ManagedMediaPlayerPool(recordingFileHandler);
 
         recordingAdapter = new RecordingAdapter(this, mediaPlayerPool);
         linearLayoutManager = new LinearLayoutManager(getContext());
@@ -63,29 +63,29 @@ public class RecordingListView extends FrameLayout
 
     //region ListView interface implementation
     @Override
-    public void setNewList(List<PersistedRecording> newList) {
+    public void setNewList(List<OnDiskRecording> newList) {
         recordingAdapter.setNewList(newList);
     }
 
     @Override
-    public List<PersistedRecording> getCurrentList() {
+    public List<OnDiskRecording> getCurrentList() {
         return recordingAdapter.getRecordings();
     }
 
     @Override
-    public void setOnLickListener(Listener<PersistedRecording> listener) {
+    public void setOnLickListener(Listener<OnDiskRecording> listener) {
         this.clickListener = listener;
     }
 
     @Override
-    public void onLongClick(final PersistedRecording recording, int position) {
+    public void onLongClick(final OnDiskRecording recording, int position) {
         if(clickListener != null) {
             clickListener.onLongClick(recording, position);
         }
     }
 
     @Override
-    public void onClick(PersistedRecording recording, int position) {
+    public void onClick(OnDiskRecording recording, int position) {
         if(clickListener != null) {
             clickListener.onClick(recording, position);
         }

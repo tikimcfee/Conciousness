@@ -2,6 +2,7 @@ package com.braindroid.conciousness;
 
 import android.Manifest;
 import android.content.Context;
+import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +24,8 @@ import com.braindroid.nervecenter.domainRecordingTools.BasicRecordingProvider;
 import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.domainRecordingTools.PersistedRecordingMetaFileWriter;
 import com.braindroid.nervecenter.domainRecordingTools.recordingSource.AudioRecordingHandler;
+import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording;
+import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecordingKt;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
@@ -31,6 +34,7 @@ import com.braindroid.nervecenter.utils.SampleIOHandler;
 import com.braindroid.nervecenter.utils.sampling.strategies.WaveformTextureView;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import timber.log.Timber;
@@ -93,13 +97,19 @@ public class HomeActivity extends BaseActivity {
         PersistedRecordingMetaFileWriter metaFileWriter = new PersistedRecordingMetaFileWriter(modelHandler);
         BasicRecordingProvider basicRecordingProvider = new BasicRecordingProvider(applicationContext, fileHandler, modelHandler, metaFileWriter);
 
-        AudioRecordingHandler handler = new AudioRecordingHandler();
-        deviceRecorder = new DeviceRecorder(handler, basicRecordingProvider, fileHandler, modelHandler);
+        deviceRecorder = new DeviceRecorder(new MediaRecorder(), basicRecordingProvider, fileHandler, modelHandler);
 
         boolean didRestore = deviceRecorder.restore();
         Timber.v("DeviceRecorder restored files - %s", didRestore);
         if(didRestore) {
-            recordingListView.setNewList(deviceRecorder.getAllRecordings());
+            List<PersistedRecording> persistedRecordings = deviceRecorder.getAllRecordings();
+            List<OnDiskRecording> onDiskRecordings = new ArrayList<OnDiskRecording>();
+            for(PersistedRecording recording : persistedRecordings) {
+                onDiskRecordings.add(
+                        OnDiskRecordingKt.fromPersistedRecording(new OnDiskRecording(), recording)
+                );
+            }
+            recordingListView.setNewList(onDiskRecordings);
         }
 
         listViewPresenter = new RecordingListViewPresenter(this, recordingListView, deviceRecorder, new TagChooser());
@@ -221,7 +231,14 @@ public class HomeActivity extends BaseActivity {
         uiHandler.post(new Runnable() {
             @Override
             public void run() {
-                recordingListView.setNewList(deviceRecorder.getAllRecordings());
+                List<PersistedRecording> persistedRecordings = deviceRecorder.getAllRecordings();
+                List<OnDiskRecording> onDiskRecordings = new ArrayList<OnDiskRecording>();
+                for(PersistedRecording recording : persistedRecordings) {
+                    onDiskRecordings.add(
+                            OnDiskRecordingKt.fromPersistedRecording(new OnDiskRecording(), recording)
+                    );
+                }
+                recordingListView.setNewList(onDiskRecordings);
             }
         });
     }

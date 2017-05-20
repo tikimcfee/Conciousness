@@ -21,6 +21,10 @@ class OnDiskRecordingFileHandler(val fileProvider: DiskBasedFileProvider) {
 
     fun recordingExists(): Boolean = currentRecording?.asAudioFile()?.exists() ?: false
 
+    fun recordingAudioFilePath() : String? {
+        return currentRecording?.asAudioFile()?.absolutePath
+    }
+
     fun createAudioInputStream(): FileInputStream? {
         return currentRecording?.asAudioFile()?.let { inputStream(it) }
     }

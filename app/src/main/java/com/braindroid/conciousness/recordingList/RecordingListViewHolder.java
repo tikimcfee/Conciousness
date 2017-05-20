@@ -10,9 +10,9 @@ import android.widget.TextView;
 
 import com.braindroid.conciousness.R;
 import com.braindroid.conciousness.ViewFinder;
-import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayer;
+import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording;
+import com.braindroid.nervecenter.kotlinModels.playbackTools.ManagedMediaPlayer;
 import com.braindroid.nervecenter.playbackTools.SeekingAudioController;
-import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 
 import timber.log.Timber;
 
@@ -76,7 +76,7 @@ public class RecordingListViewHolder extends RecyclerView.ViewHolder {
         );
     }
 
-    public void bind(RecordingListViewModel listViewModel, PersistedRecording recording) {
+    public void bind(RecordingListViewModel listViewModel, OnDiskRecording recording) {
         currentViewModel = listViewModel;
 
         mainButton.setText("play");

@@ -9,19 +9,15 @@ class ManagedMediaPlayerPool(val diskRecordingFileHandler: OnDiskRecordingFileHa
         : ManagedMediaPlayer(diskRecordingFileHandler)
     {
         override fun play() {
-            playerPool.playRequest(this)
+            playerPool.currentPlayer?.let {
+                if (it.isPlaying()) it.pause()
+            }
+            playerPool.currentPlayer = this
+            super.play()
         }
     }
 
     var currentPlayer: ManagedMediaPlayer? = null
 
     fun fromPool() = PooledPlayer(diskRecordingFileHandler, this)
-
-    private fun playRequest(pooledPlayer: PooledPlayer) {
-        currentPlayer?.let {
-            if (it.isPlaying()) it.pause()
-        }
-        pooledPlayer.play()
-        currentPlayer = pooledPlayer
-    }
 }

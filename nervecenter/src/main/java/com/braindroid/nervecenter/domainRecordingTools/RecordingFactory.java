@@ -25,7 +25,7 @@ public class RecordingFactory {
         toReturn.setName("User recording : " + cleanName);
 
         PersistedRecordingSystemMeta meta = new PersistedRecordingSystemMeta();
-        meta.setTargetModelIdentifier(cleanName + "_meta.json");
+        meta.setTargetModelIdentifier(cleanName);
         meta.setTargetRecordingIdentifier(cleanName);
         toReturn.setSystemMeta(meta);
 

@@ -1,31 +1,30 @@
 package com.braindroid.nervecenter.domainRecordingTools;
 
 import android.media.MediaRecorder;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.braindroid.nervecenter.domainRecordingTools.recordingSource.AudioRecordingHandler;
-import com.braindroid.nervecenter.domainRecordingTools.recordingSource.AudioSampleReceiver;
 import com.braindroid.nervecenter.playbackTools.PersistingRecordingMetaWriter;
 import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingFileHandler;
 import com.braindroid.nervecenter.recordingTools.models.utils.PersistedRecordingModelHandler;
-import com.braindroid.nervecenter.utils.SampleIOHandler;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import timber.log.Timber;
 
+import static android.media.MediaRecorder.AudioSource.MIC;
+
 
 public class DeviceRecorder
         implements MediaRecorder.OnInfoListener,
         MediaRecorder.OnErrorListener,
-        PersistingRecordingMetaWriter,
-        AudioSampleReceiver {
+        PersistingRecordingMetaWriter {
 
-    private final AudioRecordingHandler audioRecordingHandler;
+    private final MediaRecorder mediaRecorder;
     private final BasicRecordingProvider recordingProvider;
     private final LinkedList<PersistedRecording> completedRecordings = new LinkedList<>();
 
@@ -35,15 +34,14 @@ public class DeviceRecorder
     private PersistedRecording currentRecording = null;
     private boolean isRecording = false;
 
-    public DeviceRecorder(AudioRecordingHandler audioRecordingHandler,
+    public DeviceRecorder(MediaRecorder mediaRecorder,
                           BasicRecordingProvider recordingProvider,
                           PersistedRecordingFileHandler fileHandler,
                           PersistedRecordingModelHandler modelHandler) {
+        this.mediaRecorder = mediaRecorder;
         this.recordingProvider = recordingProvider;
         this.fileHandler = fileHandler;
         this.modelHandler = modelHandler;
-        this.audioRecordingHandler = audioRecordingHandler;
-        audioRecordingHandler.setAudioSampleReceiver(this);
     }
 
     public boolean restore() {
@@ -61,24 +59,59 @@ public class DeviceRecorder
     }
 
     public boolean initialize()  {
+        mediaRecorder.setOnErrorListener(this);
+        mediaRecorder.setOnInfoListener(this);
+
+        mediaRecorder.setAudioSource(MIC);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mediaRecorder.setAudioSamplingRate(44100);
+        mediaRecorder.setAudioEncodingBitRate(96000);
+
         if(currentRecording == null) {
             Timber.w("No current recording set in initialize; reacquiring from provider");
             currentRecording = recordingProvider.getCurrentRecording();
         }
 
+        FileOutputStream fileOutputStream = fileHandler.ensureAudioFileOutputStream(currentRecording);
+        if(fileOutputStream == null) {
+            Timber.e("No FOS available for recording; will not set output fil");
+            return false;
+        }
+
+        try {
+            mediaRecorder.setOutputFile(fileOutputStream.getFD());
+        } catch (IllegalStateException e) {
+            Timber.e(e, "Illegal State in initialize() : %s", currentRecording);
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            Timber.e(e, "Bade file in DeviceRecorder : %s", currentRecording);
+            e.printStackTrace();
+        }
+
         boolean successful = true;
+        try {
+            mediaRecorder.prepare();
+        } catch (IllegalStateException ise) {
+            Timber.e("Incorrect state not in correct state to initialize - %s", mediaRecorder.toString());
+            successful = false;
+        } catch (IOException ioe) {
+            successful = false;
+        }
+
         return successful;
     }
 
     private void reinitialize() {
+        mediaRecorder.reset();
         initialize();
     }
 
     public PersistedRecording startRecording() {
         Timber.v("PersistedRecording start - %s", currentRecording);
         try {
-//            mediaRecorder.start();
-            audioRecordingHandler.startRecording();
+            mediaRecorder.start();
             isRecording = true;
         } catch (IllegalStateException e) {
             Timber.e(e, "Could not start media recorder; nothing is being written to [%s].", currentRecording);
@@ -86,36 +119,10 @@ public class DeviceRecorder
         return currentRecording;
     }
 
-    //region Sample receives
-
-
-    private SampleIOHandler sampleIOHandler;
-
-    @Override
-    public void onNewAudioSample(short[] sample) {
-        if(sampleIOHandler == null) {
-            sampleIOHandler = new SampleIOHandler(
-                    fileHandler.ensureAudioFileOutputStream(currentRecording)
-            );
-        }
-        sampleIOHandler.onNewAudioSample(sample);
-    }
-
-    @Override
-    public void onSamplingStopped() {
-        if(sampleIOHandler != null) {
-            sampleIOHandler.kill();
-            sampleIOHandler = null;
-        }
-    }
-
-    //endregion
-
     public PersistedRecording stopRecording() {
         Timber.v("PersistedRecording stop - %s", currentRecording);
         try {
-//            mediaRecorder.stop();
-            audioRecordingHandler.stopRecording();
+            mediaRecorder.stop();
             completedRecordings.add(currentRecording);
             isRecording = false;
         } catch (IllegalStateException e) {

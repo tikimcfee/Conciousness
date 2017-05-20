@@ -4,9 +4,9 @@ import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
 import android.view.ViewGroup;
 
-import com.braindroid.nervecenter.playbackTools.ManagedMediaPlayerPool;
+import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording;
+import com.braindroid.nervecenter.kotlinModels.playbackTools.ManagedMediaPlayerPool;
 import com.braindroid.nervecenter.playbackTools.SeekingAudioController;
-import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,11 +22,11 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
     implements RecordingListViewHolder.OnClick {
 
     public interface OnRecordingItemClicked {
-        void onClick(PersistedRecording recording, int position);
-        void onLongClick(PersistedRecording recording, int position);
+        void onClick(OnDiskRecording recording, int position);
+        void onLongClick(OnDiskRecording recording, int position);
     }
 
-    private final List<PersistedRecording> recordings;
+    private final List<OnDiskRecording> recordings;
     private final LruCache<String, RecordingListViewModel> viewModelLruCache;
     private final ManagedMediaPlayerPool playerPool;
 
@@ -45,7 +45,7 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
     //region Adapter Implementation
     @Override
     public RecordingListViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return RecordingListViewHolder.create(parent, this, playerPool.createManagedMediaPlayer());
+        return RecordingListViewHolder.create(parent, this, playerPool.fromPool());
     }
 
     @Override
@@ -55,8 +55,8 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
             return;
         }
 
-        PersistedRecording toBind = recordings.get(position);
-        String id = toBind.getSystemMeta().getTargetRecordingIdentifier();
+        OnDiskRecording toBind = recordings.get(position);
+        String id = toBind.getSystemMeta().getRecordingId();
         RecordingListViewModel listViewModel = viewModelLruCache.get(id);
         if(listViewModel == null) {
             listViewModel = RecordingTransformer.toViewModel(toBind);
@@ -79,7 +79,7 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
     }
     //endregion
 
-    public void setNewList(List<PersistedRecording> newList) {
+    public void setNewList(List<OnDiskRecording> newList) {
         recordings.clear();
         viewModelLruCache.evictAll();
         recordings.addAll(newList);
@@ -87,7 +87,7 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
         notifyDataSetChanged();
     }
 
-    public List<PersistedRecording> getRecordings() {
+    public List<OnDiskRecording> getRecordings() {
         return Collections.unmodifiableList(recordings);
     }
 
@@ -103,7 +103,7 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
             return;
         }
 
-        PersistedRecording recording = recordings.get(position);
+        OnDiskRecording recording = recordings.get(position);
         if(longPress) {
             onRecordingItemClicked.onLongClick(recording, position);
         } else {

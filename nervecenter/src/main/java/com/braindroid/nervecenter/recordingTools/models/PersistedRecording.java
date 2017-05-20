@@ -2,10 +2,14 @@ package com.braindroid.nervecenter.recordingTools.models;
 
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
+import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording;
+import com.braindroid.nervecenter.kotlinModels.data.RecordingTag;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import timber.log.Timber;
 
@@ -25,6 +29,46 @@ public class PersistedRecording implements Recording {
     @JsonField(name="tags")
     private List<PersistedRecordingTag> tagsImpl;
     //endregion
+
+    public static PersistedRecording fromOnDiskRecording(OnDiskRecording onDiskRecording) {
+        PersistedRecording persistedRecording = new PersistedRecording();
+        persistedRecording.name = onDiskRecording.getSystemMeta().getRecordingName();
+
+        // Copy system meta
+        PersistedRecordingSystemMeta meta = new PersistedRecordingSystemMeta();
+            meta.setTargetModelIdentifier(onDiskRecording.getSystemMeta().getRecordingId());
+            meta.setTargetRecordingIdentifier(onDiskRecording.getSystemMeta().getRecordingId());
+        persistedRecording.setSystemMeta(meta);
+
+        // Copy user meta
+        PersistedRecordingUserMeta userMeta = new PersistedRecordingUserMeta();
+            Map<String, String> copied = new HashMap<String, String>();
+            for(String key : onDiskRecording.getUserMeta().getProperties().keySet()) {
+                String val = null;
+                 try {
+                     val = (String)onDiskRecording.getUserMeta().getProperties().get(key);
+                 } catch (Exception e) {
+                     e.printStackTrace();
+                 }
+
+                copied.put(key, val);
+            }
+            userMeta.setBaseProperties(copied);
+        persistedRecording.setUserMeta(userMeta);
+
+        // Copy tags
+        List<PersistedRecordingTag> copiedTags = new ArrayList<>();
+            for(RecordingTag tag : onDiskRecording.getTags()) {
+                PersistedRecordingTag copy =  new PersistedRecordingTag();
+                copy.setDisplay(tag.getDisplayName());
+                copy.setIdentifier(tag.getIdentifier());
+                copy.setTagProperties(new HashMap<String, String>());
+                copiedTags.add(copy);
+            }
+        persistedRecording.setTagsImpl(copiedTags);
+
+        return  persistedRecording;
+    }
 
     @Override
     public String getName() {
