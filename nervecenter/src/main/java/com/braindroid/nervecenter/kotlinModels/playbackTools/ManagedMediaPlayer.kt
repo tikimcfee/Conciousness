@@ -26,7 +26,7 @@ open class ManagedMediaPlayer(
 
     init {
         mediaPlayer.setOnBufferingUpdateListener { mp, percent ->  }
-        mediaPlayer.setOnCompletionListener { mp -> externalOnCompletionListener?.onCompletion(mp)}
+        mediaPlayer.setOnCompletionListener { mp -> externalOnCompletionListener?.onCompletion(mp) }
         mediaPlayer.setOnErrorListener { mp, what, extra -> false }
         mediaPlayer.setOnInfoListener { mp, what, extra -> false }
         mediaPlayer.setOnPreparedListener {
@@ -41,14 +41,13 @@ open class ManagedMediaPlayer(
 
     fun initializeWithRecording(onDiskRecording: OnDiskRecording) {
         currentRecording = onDiskRecording
-        recordingFileHandler.currentRecording = onDiskRecording
         currentRecordingDuration = 0
         isPrepared = false
 
         if(mediaPlayer.isPlaying) mediaPlayer.stop()
         mediaPlayer.reset()
 
-        recordingFileHandler.recordingAudioFilePath()?.let {
+        recordingFileHandler.recordingAudioFilePath(onDiskRecording)?.let {
             try {
                 mediaPlayer.setDataSource(it)
             } catch (e: IOException) {

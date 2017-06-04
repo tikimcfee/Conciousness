@@ -65,10 +65,6 @@ public class HomeActivity extends BaseActivity {
 
         setContentView(R.layout.activity_home);
 
-        if(Timber.treeCount() == 0) {
-            Timber.plant(new Timber.DebugTree());
-        }
-
         bindViewsAndListeners();
 
         buildDependencies();
@@ -106,7 +102,7 @@ public class HomeActivity extends BaseActivity {
             List<OnDiskRecording> onDiskRecordings = new ArrayList<OnDiskRecording>();
             for(PersistedRecording recording : persistedRecordings) {
                 onDiskRecordings.add(
-                        OnDiskRecordingKt.fromPersistedRecording(new OnDiskRecording(), recording)
+                        new OnDiskRecording()
                 );
             }
             recordingListView.setNewList(onDiskRecordings);
@@ -235,7 +231,7 @@ public class HomeActivity extends BaseActivity {
                 List<OnDiskRecording> onDiskRecordings = new ArrayList<OnDiskRecording>();
                 for(PersistedRecording recording : persistedRecordings) {
                     onDiskRecordings.add(
-                            OnDiskRecordingKt.fromPersistedRecording(new OnDiskRecording(), recording)
+                            new OnDiskRecording()
                     );
                 }
                 recordingListView.setNewList(onDiskRecordings);

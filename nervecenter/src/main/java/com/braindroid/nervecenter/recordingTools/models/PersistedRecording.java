@@ -32,40 +32,40 @@ public class PersistedRecording implements Recording {
 
     public static PersistedRecording fromOnDiskRecording(OnDiskRecording onDiskRecording) {
         PersistedRecording persistedRecording = new PersistedRecording();
-        persistedRecording.name = onDiskRecording.getSystemMeta().getRecordingName();
-
-        // Copy system meta
-        PersistedRecordingSystemMeta meta = new PersistedRecordingSystemMeta();
-            meta.setTargetModelIdentifier(onDiskRecording.getSystemMeta().getRecordingId());
-            meta.setTargetRecordingIdentifier(onDiskRecording.getSystemMeta().getRecordingId());
-        persistedRecording.setSystemMeta(meta);
-
-        // Copy user meta
-        PersistedRecordingUserMeta userMeta = new PersistedRecordingUserMeta();
-            Map<String, String> copied = new HashMap<String, String>();
-            for(String key : onDiskRecording.getUserMeta().getProperties().keySet()) {
-                String val = null;
-                 try {
-                     val = (String)onDiskRecording.getUserMeta().getProperties().get(key);
-                 } catch (Exception e) {
-                     e.printStackTrace();
-                 }
-
-                copied.put(key, val);
-            }
-            userMeta.setBaseProperties(copied);
-        persistedRecording.setUserMeta(userMeta);
-
-        // Copy tags
-        List<PersistedRecordingTag> copiedTags = new ArrayList<>();
-            for(RecordingTag tag : onDiskRecording.getTags()) {
-                PersistedRecordingTag copy =  new PersistedRecordingTag();
-                copy.setDisplay(tag.getDisplayName());
-                copy.setIdentifier(tag.getIdentifier());
-                copy.setTagProperties(new HashMap<String, String>());
-                copiedTags.add(copy);
-            }
-        persistedRecording.setTagsImpl(copiedTags);
+//        persistedRecording.name = onDiskRecording.getSystemMeta().getRecordingName();
+//
+//        // Copy system meta
+//        PersistedRecordingSystemMeta meta = new PersistedRecordingSystemMeta();
+//            meta.setTargetModelIdentifier(onDiskRecording.getSystemMeta().getRecordingId());
+//            meta.setTargetRecordingIdentifier(onDiskRecording.getSystemMeta().getRecordingId());
+//        persistedRecording.setSystemMeta(meta);
+//
+//        // Copy user meta
+//        PersistedRecordingUserMeta userMeta = new PersistedRecordingUserMeta();
+//            Map<String, String> copied = new HashMap<String, String>();
+//            for(String key : onDiskRecording.getUserMeta().getProperties().keySet()) {
+//                String val = null;
+//                 try {
+//                     val = (String)onDiskRecording.getUserMeta().getProperties().get(key);
+//                 } catch (Exception e) {
+//                     e.printStackTrace();
+//                 }
+//
+//                copied.put(key, val);
+//            }
+//            userMeta.setBaseProperties(copied);
+//        persistedRecording.setUserMeta(userMeta);
+//
+//        // Copy tags
+//        List<PersistedRecordingTag> copiedTags = new ArrayList<>();
+//            for(RecordingTag tag : onDiskRecording.getTags()) {
+//                PersistedRecordingTag copy =  new PersistedRecordingTag();
+//                copy.setDisplay(tag.getDisplayName());
+//                copy.setIdentifier(tag.getIdentifier());
+//                copy.setTagProperties(new HashMap<String, String>());
+//                copiedTags.add(copy);
+//            }
+//        persistedRecording.setTagsImpl(copiedTags);
 
         return  persistedRecording;
     }

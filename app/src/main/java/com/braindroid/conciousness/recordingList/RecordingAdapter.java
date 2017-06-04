@@ -56,7 +56,7 @@ public class RecordingAdapter extends RecyclerView.Adapter<RecordingListViewHold
         }
 
         OnDiskRecording toBind = recordings.get(position);
-        String id = toBind.getSystemMeta().getRecordingId();
+        String id = toBind.getRecordingId();
         RecordingListViewModel listViewModel = viewModelLruCache.get(id);
         if(listViewModel == null) {
             listViewModel = RecordingTransformer.toViewModel(toBind);

@@ -9,13 +9,13 @@ interface DiskBasedFileProvider {
     /**
      * Suggested directory name for storing data models describing audio recordings
      */
-    val defaultModelStoreDirectoryName: String
+    val modelStoreDirectoryName: String
         get() = "recordingData"
 
     /**
      * Suggested directory name for storing raw audio recordings
      */
-    val defaultRecordingStoreDirectoryName: String
+    val recordingStoreDirectoryName: String
         get() = "recordings"
     //endregion
 

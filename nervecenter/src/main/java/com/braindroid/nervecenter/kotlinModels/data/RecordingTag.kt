@@ -1,7 +1,9 @@
 package com.braindroid.nervecenter.kotlinModels.data
 
-data class RecordingTag (
-        val identifier: String,
-        var displayName: String,
-        var userMeta: RecordingMeta
-)
+import io.realm.RealmObject
+
+open class RecordingTag (
+        var identifier: String = "recording_tag_no_init",
+        var displayName: String = "#badtags",
+        var userMeta: RecordingMeta = RecordingMeta()
+): RealmObject()

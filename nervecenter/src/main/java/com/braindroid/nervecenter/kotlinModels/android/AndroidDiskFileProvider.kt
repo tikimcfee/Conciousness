@@ -1,12 +1,18 @@
 package com.braindroid.nervecenter.kotlinModels.android
 
 import android.content.Context
-import com.braindroid.nervecenter.kotlinModels.utils.DiskBasedFileProvider
 import java.io.File
 
-class AndroidDiskFileProvider(val context: Context): DiskBasedFileProvider {
+class AndroidDiskFileProvider(val context: Context) {
 
-    override fun absoluteBasePath(): String? {
+    val modelStoreDirectoryName: String
+        get() = "recordingData"
+
+    val recordingStoreDirectoryName: String
+        get() = "recordings"
+
+
+    fun absoluteBasePath(): String? {
         return context.filesDir?.absolutePath + File.separator
     }
 
@@ -17,37 +23,37 @@ class AndroidDiskFileProvider(val context: Context): DiskBasedFileProvider {
         return directory
     }
 
-    override fun recordingPathForFilename(filename: String): String? {
-        return absoluteBasePath()?.let {
-            val path = it + defaultRecordingStoreDirectoryName + File.separator
-            ensureDirectory(path)
-            path + filename
-        }
+    // Audio recording files
+    fun rootRecordingPath(): String? = absoluteBasePath()?.let {
+        it + recordingStoreDirectoryName + File.separator
     }
 
-    override fun recordingFileForFilename(filename: String): File? {
-        return recordingPathForFilename(filename)?.let {
-            return File(it).let {
-                it.createNewFile()
-                it
-            }
-        }
+    fun rootRecordingDirectory(): File? = rootRecordingPath()?.let {
+        ensureDirectory(it)
     }
 
-    override fun modelPathForFilename(filename: String): String? {
-        return absoluteBasePath()?.let {
-            val path = it + defaultModelStoreDirectoryName + File.separator
-            ensureDirectory(path)
-            path + filename
-        }
+    fun recordingPathForFilename(filename: String): String? = rootRecordingPath()?.let {
+        it + filename
     }
 
-    override fun modelFileForFilename(filename: String): File? {
-        return modelPathForFilename(filename)?.let {
-            return File(it).let {
-                it.createNewFile()
-                it
-            }
-        }
+    fun recordingFileForFilename(filename: String): File? = recordingPathForFilename(filename)?.let {
+        File(it)
+    }
+
+    // Data model files
+    fun rootModelPath(): String? = absoluteBasePath()?.let {
+        it + modelStoreDirectoryName + File.separator
+    }
+
+    fun rootModelDirectory(): File? = rootModelPath()?.let {
+        ensureDirectory(it)
+    }
+
+    fun modelPathForFilename(filename: String): String? = rootModelPath()?.let {
+        it + filename
+    }
+
+    fun modelFileForFilename(filename: String): File? = modelPathForFilename(filename)?.let {
+        File(it)
     }
 }

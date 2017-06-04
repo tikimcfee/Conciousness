@@ -1,5 +1,6 @@
 package com.braindroid.nervecenter.kotlinModels.utils
 
+import com.braindroid.nervecenter.kotlinModels.android.AndroidDiskFileProvider
 import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording
 import timber.log.Timber
 import java.io.File
@@ -7,31 +8,23 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 
-class OnDiskRecordingFileHandler(val fileProvider: DiskBasedFileProvider) {
-
-    var currentRecording: OnDiskRecording? = null
+class OnDiskRecordingFileHandler(val fileProvider: AndroidDiskFileProvider) {
 
     fun OnDiskRecording.asAudioFile(): File? {
-        return fileProvider.recordingFileForFilename(this.systemMeta.recordingId)
+        return fileProvider.recordingFileForFilename(this.recordingId)
     }
 
     fun OnDiskRecording.asDataFile(): File? {
-        return fileProvider.modelFileForFilename(this.systemMeta.recordingId)
+        return fileProvider.modelFileForFilename(this.recordingId)
     }
 
-    fun recordingExists(): Boolean = currentRecording?.asAudioFile()?.exists() ?: false
+    fun recordingExists(recording: OnDiskRecording): Boolean = recording.asAudioFile()?.exists() ?: false
 
-    fun recordingAudioFilePath() : String? {
-        return currentRecording?.asAudioFile()?.absolutePath
-    }
+    fun recordingAudioFilePath(recording: OnDiskRecording) : String? = recording.asAudioFile()?.absolutePath
 
-    fun createAudioInputStream(): FileInputStream? {
-        return currentRecording?.asAudioFile()?.let { inputStream(it) }
-    }
+    fun createAudioInputStream(recording: OnDiskRecording): FileInputStream? = recording.asAudioFile()?.let { inputStream(it) }
 
-    fun createAudioOutStream(): FileOutputStream? {
-        return currentRecording?.asAudioFile()?.let { outputStream(it) }
-    }
+    fun createAudioOutStream(recording: OnDiskRecording): FileOutputStream? = recording.asAudioFile()?.let { outputStream(it) }
 
     fun outputStream(file: File): FileOutputStream? {
         try {

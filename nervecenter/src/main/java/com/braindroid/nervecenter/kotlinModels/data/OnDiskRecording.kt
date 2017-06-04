@@ -1,44 +1,12 @@
 package com.braindroid.nervecenter.kotlinModels.data
 
-import com.braindroid.nervecenter.recordingTools.models.PersistedRecording
+import io.realm.RealmList
+import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
 
-data class OnDiskRecording(
-        var systemMeta: SystemMeta = SystemMeta("default_id", "new_on_disk_recording"),
-        var userMeta: RecordingMeta = RecordingMeta(mutableMapOf()),
-        var tags: List<RecordingTag> = mutableListOf()
-)
-
-fun OnDiskRecording.fromPersistedRecording(persistedRecording: PersistedRecording) : OnDiskRecording {
-    return OnDiskRecording(
-            SystemMeta(
-                    persistedRecording.systemMeta.targetRecordingIdentifier,
-                    persistedRecording.name
-            ),
-            RecordingMeta(
-                    mutableMapOf<String, Any>().let {
-                        for ((key, value) in persistedRecording.userMeta.baseProperties) {
-                            it.put(key, value)
-                        }
-                        it
-                    }
-            ),
-            let {
-                var tags = ArrayList<RecordingTag>()
-                persistedRecording.tagsImpl.mapTo(tags) { tag ->
-                    RecordingTag(
-                            tag.identifier,
-                            tag.display,
-                            RecordingMeta(
-                                    mutableMapOf<String, Any>().let {
-                                        for ((key, value) in tag.tagProperties) {
-                                            it.put(key, value)
-                                        }
-                                        it
-                                    }
-                            )
-                    )
-                }
-                tags
-            }
-    )
-}
+open class OnDiskRecording(
+        @PrimaryKey var recordingId: String = "unmanaged_recording",
+        var systemMeta: SystemMeta = SystemMeta(),
+        var userMeta: RecordingMeta = RecordingMeta(),
+        var tags: RealmList<RecordingTag> = RealmList()
+): RealmObject()
