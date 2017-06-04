@@ -7,7 +7,6 @@ import com.braindroid.nervecenter.domainRecordingTools.recordingSource.AudioSamp
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,10 +15,11 @@ import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
-import okio.BufferedSource;
-import okio.Okio;
-import okio.Source;
 import timber.log.Timber;
+
+//import okio.BufferedSource;
+//import okio.Okio;
+//import okio.Source;
 
 /**
  *
@@ -131,10 +131,11 @@ public class SampleIOHandler implements AudioSampleReceiver {
     }
 
     public static short[] getAudioFromInputStream(FileInputStream inputStream) throws IOException {
-        Source fileSource = Okio.source(inputStream);
-        BufferedSource bufferedSource = Okio.buffer(fileSource);
-
-        byte[] data = bufferedSource.readByteArray();
+//        Source fileSource = Okio.source(inputStream);
+//        BufferedSource bufferedSource = Okio.buffer(fileSource);
+//
+//        byte[] data = bufferedSource.readByteArray();
+        byte[] data = new byte[]{};
 
         ShortBuffer shortBuffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
         short[] samples = new short[shortBuffer.limit()];

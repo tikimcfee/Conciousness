@@ -4,15 +4,15 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 
-import com.braindroid.nervecenter.recordingTools.models.Recording;
-import com.braindroid.nervecenter.recordingTools.models.PersistedRecordingTag;
+import com.braindroid.nervecenter.kotlinModels.data.RecordingMeta;
+import com.braindroid.nervecenter.kotlinModels.data.RecordingTag;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class TagChooser {
 
-    private static final ArrayList<Recording.Tag> recordingTags;
+    private static final ArrayList<RecordingTag> recordingTags;
     final static CharSequence[] displays = new String[] {
             "Happy", "Sad", "Interesting", "Funny", "Deep", "Confusing"
     };
@@ -22,9 +22,11 @@ public class TagChooser {
     static {
         recordingTags = new ArrayList<>();
         for (int i = 0; i < displays.length; i++) {
-            Recording.Tag recordingTag = new PersistedRecordingTag();
-            recordingTag.setDisplay((String)displays[i]);
-            recordingTag.setIdentifier((String)vals[i]);
+            RecordingTag recordingTag = new RecordingTag(
+                    (String)displays[i],
+                    (String)vals[i],
+                    new RecordingMeta()
+            );
             recordingTags.add(recordingTag);
         }
     }
@@ -32,14 +34,14 @@ public class TagChooser {
 
 
     public interface TagsCallback {
-        void onNewTags(List<Recording.Tag> tags);
+        void onNewTags(List<RecordingTag> tags);
     }
 
     public void getTags(Context context, final TagsCallback tagsCallback) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Choose Tags");
 
-        final ArrayList<Recording.Tag> selectedTags = new ArrayList<>();
+        final ArrayList<RecordingTag> selectedTags = new ArrayList<>();
         builder.setMultiChoiceItems(
                 displays, null, new DialogInterface.OnMultiChoiceClickListener() {
                     @Override

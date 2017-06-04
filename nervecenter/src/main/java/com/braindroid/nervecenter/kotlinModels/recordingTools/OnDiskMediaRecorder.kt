@@ -40,6 +40,10 @@ class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
             Timber.v("info from ($mr, $this) --> what:$what extra:$extra")
             infoListener?.onInfo(mr, what, extra)
         }
+    }
+
+    private fun reinit() {
+        mediaRecorder.reset()
 
         mediaRecorder.setAudioSource(audioSource)
         mediaRecorder.setOutputFormat(outputFormat)
@@ -49,6 +53,8 @@ class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
     }
 
     fun prepare(onDiskRecording: OnDiskRecording): Boolean {
+        reinit()
+
         currentRecording = onDiskRecording
         return fileHandler.createAudioOutStream(onDiskRecording)?.let {
             try {

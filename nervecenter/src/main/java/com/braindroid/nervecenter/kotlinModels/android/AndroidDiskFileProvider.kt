@@ -37,7 +37,10 @@ class AndroidDiskFileProvider(val context: Context) {
     }
 
     fun recordingFileForFilename(filename: String): File? = recordingPathForFilename(filename)?.let {
-        File(it)
+        rootRecordingDirectory()
+        var ret = File(it)
+        ret.createNewFile()
+        ret
     }
 
     // Data model files
@@ -54,6 +57,9 @@ class AndroidDiskFileProvider(val context: Context) {
     }
 
     fun modelFileForFilename(filename: String): File? = modelPathForFilename(filename)?.let {
-        File(it)
+        rootModelDirectory()
+        var ret = File(it)
+        ret.createNewFile()
+        ret
     }
 }

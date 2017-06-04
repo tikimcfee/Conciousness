@@ -3,32 +3,26 @@ package com.braindroid.conciousness.recordingList;
 import android.content.Context;
 
 import com.braindroid.conciousness.recordingTags.TagChooser;
-import com.braindroid.nervecenter.domainRecordingTools.DeviceRecorder;
 import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording;
-import com.braindroid.nervecenter.kotlinModels.data.RecordingMeta;
 import com.braindroid.nervecenter.kotlinModels.data.RecordingTag;
-import com.braindroid.nervecenter.recordingTools.models.PersistedRecording;
-import com.braindroid.nervecenter.recordingTools.models.Recording;
+import com.braindroid.nervecenter.kotlinModels.recordingTools.RecordingDeck;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class RecordingListViewPresenter implements ListView.Listener<OnDiskRecording>  {
 
     private final Context context;
     private ListView<OnDiskRecording> persistedRecordingListView;
-    private DeviceRecorder deviceRecorder;
+    private RecordingDeck recordingDeck;
     private TagChooser tagChooser;
 
     public RecordingListViewPresenter(Context context,
                                       ListView<OnDiskRecording> listView,
-                                      DeviceRecorder deviceRecorder,
+                                      RecordingDeck recordingDeck,
                                       TagChooser tagChooser) {
         this.context = context;
         this.persistedRecordingListView = listView;
-        this.deviceRecorder = deviceRecorder;
+        this.recordingDeck = recordingDeck;
         this.tagChooser = tagChooser;
 
         listView.setOnLickListener(this);
@@ -39,27 +33,14 @@ public class RecordingListViewPresenter implements ListView.Listener<OnDiskRecor
 
         tagChooser.getTags(context, new TagChooser.TagsCallback() {
             @Override
-            public void onNewTags(List<Recording.Tag> tags) {
-                List<RecordingTag> copied = new ArrayList<RecordingTag>();
-                for(Recording.Tag tag : tags) {
-                    Map<String, String> map = tag.getTagProperties();
-                    Map<String, Object> copiedTagProps = new HashMap<>();
-                    for(String key : map.keySet()) {
-                        copiedTagProps.put(key, map.get(key));
-                    }
+            public void onNewTags(List<RecordingTag> tags) {
+                recording.getTags().clear();
+                recording.getTags().addAll(tags);
+                recordingDeck.saveRecording(recording);
 
-
-                    copied.add(new RecordingTag(
-                            tag.getIdentifier(),
-                            tag.getDisplay(),
-                            new RecordingMeta(copiedTagProps)
-                    ));
-                }
-
-                recording.setTags(copied);
-
-
-                deviceRecorder.persistRecording(PersistedRecording.fromOnDiskRecording(recording));
+                persistedRecordingListView.setNewList(
+                        recordingDeck.allRecordingsAsUnmanaged()
+                );
             }
         });
     }

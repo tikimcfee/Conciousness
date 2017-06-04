@@ -1,7 +1,5 @@
 package com.braindroid.conciousness.recordingList;
 
-import com.braindroid.nervecenter.recordingTools.models.Recording;
-
 public class RecordingListViewModel {
 
     private final CharSequence recordingTitle;

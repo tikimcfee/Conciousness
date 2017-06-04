@@ -11,7 +11,10 @@ class RecordingDeck(val mediaRecorder: OnDiskMediaRecorder,
     val DEFAULT_RECORDING_NAME = "audio_recording_"
     var currentSessionRecordingNumber: Int = 0
 
-    fun readyNewRecording(): Boolean = mediaRecorder.prepare(createUnmanagedRecording())
+    fun readyNewRecording(): OnDiskRecording = createUnmanagedRecording().let {
+        mediaRecorder.prepare(it)
+        it
+    }
 
     private fun createUnmanagedRecording(): OnDiskRecording = synchronized(this, {
         OnDiskRecording(
