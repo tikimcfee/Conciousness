@@ -24,7 +24,7 @@ class AndroidDiskFileProvider(val context: Context) {
     }
 
     // Audio recording files
-    fun rootRecordingPath(): String? = absoluteBasePath()?.let {
+    private fun rootRecordingPath(): String? = absoluteBasePath()?.let {
         it + recordingStoreDirectoryName + File.separator
     }
 
@@ -37,14 +37,16 @@ class AndroidDiskFileProvider(val context: Context) {
     }
 
     fun recordingFileForFilename(filename: String): File? = recordingPathForFilename(filename)?.let {
+        // Ensures directory is created
         rootRecordingDirectory()
-        var ret = File(it)
+
+        val ret = File(it)
         ret.createNewFile()
         ret
     }
 
     // Data model files
-    fun rootModelPath(): String? = absoluteBasePath()?.let {
+    private fun rootModelPath(): String? = absoluteBasePath()?.let {
         it + modelStoreDirectoryName + File.separator
     }
 
@@ -57,8 +59,10 @@ class AndroidDiskFileProvider(val context: Context) {
     }
 
     fun modelFileForFilename(filename: String): File? = modelPathForFilename(filename)?.let {
+        // Ensures directory is created
         rootModelDirectory()
-        var ret = File(it)
+
+        val ret = File(it)
         ret.createNewFile()
         ret
     }

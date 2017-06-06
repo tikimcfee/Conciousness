@@ -34,9 +34,9 @@ public class RecordingListViewPresenter implements ListView.Listener<OnDiskRecor
         tagChooser.getTags(context, new TagChooser.TagsCallback() {
             @Override
             public void onNewTags(List<RecordingTag> tags) {
-                recording.getTags().clear();
-                recording.getTags().addAll(tags);
-                recordingDeck.saveRecording(recording);
+                recordingDeck.getRecordingStore().setTags(
+                        recording, tags
+                );
 
                 persistedRecordingListView.setNewList(
                         recordingDeck.allRecordingsAsUnmanaged()

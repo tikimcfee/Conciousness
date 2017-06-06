@@ -81,7 +81,7 @@ class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
             mediaRecorder.start()
             isRecording = true
         } catch (ise: IllegalStateException) {
-            Timber.e(ise, "Could not start media recorder; nothing is being written to ${currentRecording}.")
+            Timber.e(ise, "Could not start media recorder; nothing is being written to $currentRecording.")
         }
     }
 
@@ -94,7 +94,7 @@ class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
         try {
             mediaRecorder.stop()
         } catch (e: IllegalStateException) {
-            Timber.e(e, "Could not stop media recorder; recording may be corrupt or unreadable ${currentRecording}.")
+            Timber.e(e, "Could not stop media recorder; recording may be corrupt or unreadable $currentRecording.")
         }
 
         isRecording = false

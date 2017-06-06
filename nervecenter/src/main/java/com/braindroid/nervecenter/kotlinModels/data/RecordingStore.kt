@@ -13,9 +13,6 @@ class RecordingStore(val fileHandler: OnDiskRecordingFileHandler) {
     // instance vars
     val realmConfig: RealmConfiguration
 
-    // Helpers
-    fun threadLocal(): Realm = Realm.getInstance(realmConfig)
-
     /**
      * @param recording     lookup a recording by its primary id
      * @return              the recording for the given primary id
@@ -66,10 +63,7 @@ class RecordingStore(val fileHandler: OnDiskRecordingFileHandler) {
                 it.deleteFromRealm()
             }
         }
-
-
     }
-
 
     /**
      * @param newRecording  Copies a recording, managed or otherwise, to realm
@@ -92,5 +86,7 @@ class RecordingStore(val fileHandler: OnDiskRecordingFileHandler) {
             }
 
 
+    // Helpers
+    fun threadLocal(): Realm = Realm.getInstance(realmConfig)
 
 }
