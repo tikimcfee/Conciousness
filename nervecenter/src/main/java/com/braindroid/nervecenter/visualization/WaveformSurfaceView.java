@@ -137,7 +137,7 @@ public class WaveformSurfaceView extends SurfaceView implements SurfaceHolder.Ca
             /* if we end up with a scroll position >= 0; we've reached the farthest left, so just reset */
             currentScrollPosition = currentScrollPosition >= 0 ? 0 : currentScrollPosition;
 
-            waveformCanvas.TEST_DRAW_TRANSLATION((int)currentScrollPosition);
+//            waveformCanvas.TEST_DRAW_TRANSLATION((int)currentScrollPosition);
         }
 
         return true;

@@ -4,6 +4,9 @@ import android.graphics.Path;
 
 import com.braindroid.nervecenter.utils.sampling.CompressedStreamParams;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SimplifedStreamFromParams {
 
 
@@ -24,6 +27,59 @@ public class SimplifedStreamFromParams {
         return resultPaths;
     }
 
+
+    public static List<float[]> getMinMaxYCoordinatesFromParams(CompressedStreamParams streamParams) {
+        final short[] audioData = streamParams.sampleSet;
+        final int audioSliceWidth = streamParams.scaledViewportWidth;
+        final float centerY = streamParams.centerPosition;
+        final int samplesToSkipBetweenGroups = streamParams.samplesToSkip;
+
+        final int groupSize = audioData.length / audioSliceWidth;
+        final short[] reused_minMaxStore = new short[2];
+        final float[] reused_yPosStore = new float[2];
+        final List<float[]> scaledMinMaxCoordinates = new ArrayList<>((audioData.length / groupSize) + 1);
+        for(int i = 0; i < audioData.length; i += samplesToSkipBetweenGroups) {
+            final int groupStart = i * groupSize;
+            final int calculatedNext = (i + 1) * groupSize;
+            final int groupEnd = calculatedNext <= audioData.length ? calculatedNext : audioData.length;
+
+            // We have calculated a start position for a nonexistant sample area; we must stop
+            // todo: it'd be great to snap to a valid scale, but it's easier for now to just leave our result full of zeroes.
+            if(groupStart >= groupEnd) {
+                break;
+            }
+
+            minMaxForGroup(groupStart, groupEnd, audioData, reused_minMaxStore);
+            scalePoints(reused_yPosStore, reused_minMaxStore, centerY);
+            scaledMinMaxCoordinates.add(new float[]{reused_yPosStore[0], reused_yPosStore[1]});
+        }
+        return scaledMinMaxCoordinates;
+    }
+
+    public static void scalePoints(
+            final float[] yPosStore,
+            final short[] minMaxStore,
+            final float centerY
+    ) {
+        yPosStore[0] = centerY - (((float)minMaxStore[0] / Short.MIN_VALUE) * centerY);
+        yPosStore[1] = centerY - (((float)minMaxStore[1] / Short.MIN_VALUE) * centerY);
+    }
+
+    public static void minMaxForGroup(
+            final int groupStart,
+            final int groupEnd,
+            final short[] data,
+            final short[] minMaxStore
+    ) {
+        short min1 = Short.MAX_VALUE, max1 = Short.MIN_VALUE;
+        for (int j = groupStart; j < groupEnd; j++) {
+            final short sample1 = data[j];
+            min1 = min1 <= sample1 ? min1 : sample1;
+            max1 = max1 >= sample1 ? max1 : sample1;
+        }
+        minMaxStore[0] = min1;
+        minMaxStore[1] = max1;
+    }
 
     public static Path[] simplifyStream(CompressedStreamParams streamParams) {
         final short[] data = streamParams.sampleSet;
@@ -55,6 +111,8 @@ public class SimplifedStreamFromParams {
         float scaledIncrementer = 0;
 
         for(int i = sliceStart; i < sliceEnd; i += samplesToSkip) {
+
+            // Find the array positions for this group
             final int groupStart = i * groupSize;
             final int calculatedNext = (i + 1) * groupSize;
             final int groupEnd = calculatedNext <= data.length ? calculatedNext : data.length;

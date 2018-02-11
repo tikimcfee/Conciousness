@@ -7,13 +7,13 @@ public class CompleteStreamFromParams {
 
     public static StreamResults stream(StreamParams streamParams) {
 
-        final short[] data = streamParams.sampleSet;
-        final int sampleSize = streamParams.scaledViewportWidth;
+        final short[] audioData = streamParams.sampleSet;
+        final int widthOfSingleViewSlice = streamParams.scaledViewportWidth;
         final int sliceStart = 0;
-        final int sliceEnd = sampleSize;
+        final int sliceEnd = widthOfSingleViewSlice;
         final float centerY = streamParams.centerPosition;
 
-        final int groupSize = data.length / sampleSize;
+        final int groupSize = audioData.length / widthOfSingleViewSlice;
         final short RESET_MAX = Short.MIN_VALUE;
         final short RESET_MIN = Short.MAX_VALUE;
         short min1, min2, max1, max2;
@@ -35,7 +35,7 @@ public class CompleteStreamFromParams {
         for(int i = sliceStart; i < sliceEnd; i++) {
             final int groupStart = i * groupSize;
             final int calculatedNext = (i + 1) * groupSize;
-            final int groupEnd = calculatedNext <= data.length ? calculatedNext : data.length;
+            final int groupEnd = calculatedNext <= audioData.length ? calculatedNext : audioData.length;
 
             // We have calculated a start position for a nonexistant sample area; we must stop
             // todo: it'd be great to snap to a valid scale, but it's easier for now to just leave our result full of zeroes.
@@ -47,8 +47,8 @@ public class CompleteStreamFromParams {
             max1 = max2 = RESET_MAX;
 
             for (int j = groupStart; j < groupEnd - 1; j++) {
-                final short sample1 = data[j];
-                final short sample2 = data[j + 1];
+                final short sample1 = audioData[j];
+                final short sample2 = audioData[j + 1];
                 min1 = min1 <= sample1 ? min1 : sample1;
                 max1 = max1 >= sample1 ? max1 : sample1;
                 min2 = min2 <= sample2 ? min2 : sample2;

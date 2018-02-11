@@ -119,7 +119,7 @@ class ZoomOnTouchListeners implements View.OnTouchListener, ZoomState {
                 mode = NONE;
                 break;
         }
-        transformReceiver.onNewTransform(textureTransformMatrix);
+//        transformReceiver.onNewTransform(textureTransformMatrix);
         return true;
     }
 

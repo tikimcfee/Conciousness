@@ -2,6 +2,8 @@ package com.braindroid.conciousness;
 
 import android.Manifest;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,14 +21,24 @@ import android.widget.Toast;
 import com.braindroid.conciousness.recordingList.RecordingListView;
 import com.braindroid.conciousness.recordingList.RecordingListViewPresenter;
 import com.braindroid.conciousness.recordingTags.TagChooser;
+import com.braindroid.conciousness.recordingView.AudioRecordingWaveformChunkView;
+import com.braindroid.conciousness.recordingView.WaveformChunk;
 import com.braindroid.nervecenter.kotlinModels.android.AndroidDiskFileProvider;
 import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording;
 import com.braindroid.nervecenter.kotlinModels.data.RecordingStore;
 import com.braindroid.nervecenter.kotlinModels.recordingTools.OnDiskMediaRecorder;
 import com.braindroid.nervecenter.kotlinModels.recordingTools.RecordingDeck;
 import com.braindroid.nervecenter.kotlinModels.utils.OnDiskRecordingFileHandler;
+import com.braindroid.nervecenter.playbackTools.playbackSource.PlaybackListener;
+import com.braindroid.nervecenter.playbackTools.playbackSource.PlaybackThread;
+import com.braindroid.nervecenter.utils.AudioUtils;
+import com.braindroid.nervecenter.utils.LibConstants;
+import com.braindroid.nervecenter.utils.SampleIOHandler;
+import com.braindroid.nervecenter.utils.sampling.CompressedStreamParams;
+import com.braindroid.nervecenter.utils.sampling.strategies.SimplifedStreamFromParams;
 import com.braindroid.nervecenter.utils.sampling.strategies.WaveformTextureView;
 
+import java.io.IOException;
 import java.util.List;
 
 import timber.log.Timber;
@@ -49,7 +61,8 @@ public class HomeActivity extends BaseActivity {
     private RecordingListView recordingListView;
 
     private int originalScrollWidth = 0;
-    private WaveformTextureView waveformTextureView;
+//    private WaveformTextureView waveformTextureView;
+    private AudioRecordingWaveformChunkView audioRecordingWaveformChunkView;
     private ScaleGestureDetector detector;
 
 
@@ -93,7 +106,8 @@ public class HomeActivity extends BaseActivity {
 
     //region View Binding / Interactions
     private void bindViewsAndListeners() {
-        waveformTextureView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view);
+//        waveformTextureView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view);
+        audioRecordingWaveformChunkView = ViewFinder.in(this, R.id.home_activity_audio_waveform_view);
 
         centerRecordButton = ViewFinder.in(this, R.id.home_activity_central_feature_button);
         centerRecordButton.setOnClickListener(new View.OnClickListener() {
@@ -138,31 +152,31 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void scaleWaveForm(double scaleFactor) {
-        ViewGroup.LayoutParams layoutParams = waveformTextureView.getLayoutParams();
-        int proposedWidth = (int)Math.round(layoutParams.width * scaleFactor);
-        if(proposedWidth <= originalScrollWidth) {
-            proposedWidth = originalScrollWidth;
-        }
-
-        Timber.v("Scale=%f Proposed=%d", scaleFactor, proposedWidth);
-
-        layoutParams.width = proposedWidth;
-        waveformTextureView.setLayoutParams(layoutParams);
+//        ViewGroup.LayoutParams layoutParams = waveformTextureView.getLayoutParams();
+//        int proposedWidth = (int)Math.round(layoutParams.width * scaleFactor);
+//        if(proposedWidth <= originalScrollWidth) {
+//            proposedWidth = originalScrollWidth;
+//        }
+//
+//        Timber.v("Scale=%f Proposed=%d", scaleFactor, proposedWidth);
+//
+//        layoutParams.width = proposedWidth;
+//        waveformTextureView.setLayoutParams(layoutParams);
     }
 
     int counter = 0;
     private void onPrimaryStateTextViewClicked() {
-//        List<PersistedRecording> recordingList = deviceRecorder.getAllRecordings();
-//        PersistedRecording persistedRecording = recordingList.get(counter++);
-//        if(counter == recordingList.size()) counter = 0;
-////        PersistedRecording persistedRecording = deviceRecorder.getLastRecording();
-//        final short[] audioData;
-//        try {
-//            audioData = SampleIOHandler.getAudioFromPath(fileHandler.getAudioFilePath(persistedRecording));
-//        } catch (IOException e) {
-//            Timber.e(e, "Failed to get audio data");
-//            return;
-//        }
+        List<OnDiskRecording> recordingList = recordingStore.getAllRecordings();
+        OnDiskRecording persistedRecording = recordingList.get(counter++);
+        if(counter == recordingList.size()) counter = 0;
+//        PersistedRecording persistedRecording = deviceRecorder.getLastRecording();
+        final short[] audioData;
+        try {
+            audioData = SampleIOHandler.getAudioFromPath(recordingFileHandler.recordingAudioFilePath(persistedRecording));
+        } catch (IOException e) {
+            Timber.e(e, "Failed to get audio data");
+            return;
+        }
 
 //        PlaybackThread playbackThread = new PlaybackThread(audioData, new PlaybackListener() {
 //            @Override
@@ -179,6 +193,28 @@ public class HomeActivity extends BaseActivity {
 
 //        waveformTextureView.setAudioDetails(audioData, LibConstants.SAMPLE_RATE, 1);
 //        waveformTextureView.refresh();
+
+
+        int sampleRate = LibConstants.SAMPLE_RATE;
+        int channels = 1;
+
+        int currentSampleSetLength = AudioUtils.calculateAudioLength(
+                audioData.length, sampleRate, channels);
+
+
+        int regularWidth = audioRecordingWaveformChunkView.getWidth();
+        float midpoint = (audioRecordingWaveformChunkView.getBottom() - audioRecordingWaveformChunkView.getTop()) / 2f;
+
+        CompressedStreamParams streamParams = new CompressedStreamParams(
+                audioData, currentSampleSetLength,
+                0, currentSampleSetLength,
+                midpoint);
+        streamParams.samplesToSkip = 1;
+        streamParams.scaleIncrement = 1;
+        streamParams.streamMode = CompressedStreamParams.STREAM_MODE_MIN_MAX;
+
+        List<float[]> simplifiedStreams = SimplifedStreamFromParams.getMinMaxYCoordinatesFromParams(streamParams);
+        audioRecordingWaveformChunkView.setCurrentWaveformChunk(new WaveformChunk(simplifiedStreams));
     }
 
     private final int on_record_request_code = 100;
@@ -196,7 +232,7 @@ public class HomeActivity extends BaseActivity {
     }
 
     private boolean onCenterRecordButtonLongClicked() {
-        waveformTextureView.RUN_TEST();
+//        waveformTextureView.RUN_TEST();
         return true;
     }
     //endregion

@@ -21,6 +21,8 @@ import com.braindroid.nervecenter.utils.sampling.strategies.SimplifedStreamFromP
 import com.braindroid.nervecenter.utils.sampling.strategies.SlicedStreamFromParams;
 import com.braindroid.nervecenter.visualization.interactive.MatrixUtils;
 
+import java.util.List;
+
 public class WaveformCanvas {
 
     public interface CanvasSupplier {
@@ -70,33 +72,34 @@ public class WaveformCanvas {
     }
 
     public void RUN_TEST() {
-        DEBUG(new Runnable() {
-            @Override
-            public void run() {
-                int counter = 0;
-                int steps = 16;
-                boolean stop = false;
-                float scale = 1.4f;
-
-                while(!stop) {
-                    Canvas canvas = canvasSupplier.acquireCanvas();
-                    canvas.drawColor(Color.parseColor("#009999"));
-
-                    int regularWidth = canvas.getWidth();
-                    int scaledWidth = Math.round(regularWidth * scale);
-                    int delta = scaledWidth - regularWidth;
-
-                    canvas.translate(-counter, 0);
-                    simplifiedDrawPath(counter, counter + regularWidth, canvas.getHeight(), scaledWidth, canvas);
-
-                    canvasSupplier.postCanvas(canvas);
-
-                    stop = counter >= delta;
-                    counter += steps;
-//                    SystemClock.sleep(34);
-                }
-            }
-        });
+//        DEBUG(new Runnable() {
+//            @Override
+//            public void run() {
+//                int counter = 0;
+//                int steps = 16;
+//                boolean stop = false;
+//                float scale = 1.4f;
+//
+//                while(!stop) {
+//                    Canvas canvas = canvasSupplier.acquireCanvas();
+//                    canvas.drawColor(Color.parseColor("#009999"));
+//
+//                    int regularWidth = canvas.getWidth();
+//                    int scaledWidth = Math.round(regularWidth * scale);
+//                    int delta = scaledWidth - regularWidth;
+//
+//                    canvas.translate(-counter, 0);
+//                    simplifiedDrawPath(counter, counter + regularWidth, canvas.getHeight(), scaledWidth, canvas);
+//
+//                    canvasSupplier.postCanvas(canvas);
+//
+//                    stop = counter >= delta;
+//                    counter += steps;
+////                    SystemClock.sleep(34);
+//                }
+//            }
+//        });
+        TEST_DRAW_TRANSLATION(0);
     }
 
     public void RUN_TEST_PAN_ZOOM(final Matrix currentTransform) {
@@ -145,7 +148,17 @@ public class WaveformCanvas {
 //                }
 
 //                canvas.translate(translation / scale, 0);
-                simplifiedDrawPath(-translation, -translation + regularWidth, canvas.getHeight(), scaledWidth, canvas);
+//                simplifiedDrawPath(-translation, -translation + regularWidth, canvas.getHeight(), scaledWidth, canvas);
+
+                CompressedStreamParams streamParams = new CompressedStreamParams(
+                        currentAudioSampleSet, currentSampleSetLength,
+                        0, currentSampleSetLength,
+                        canvas.getHeight()/2);
+                streamParams.samplesToSkip = 1;
+                streamParams.scaleIncrement = 1;
+                streamParams.streamMode = CompressedStreamParams.STREAM_MODE_MIN_MAX;
+
+                List<float[]> simplifiedStreams = SimplifedStreamFromParams.getMinMaxYCoordinatesFromParams(streamParams);
 
                 canvasSupplier.postCanvas(canvas);
             }
@@ -181,13 +194,6 @@ public class WaveformCanvas {
         this.currentAudioSampleSet = audioSampleSet;
         this.sampleRate = sampleRate;
         this.channels = channels;
-
-        calculateAudioLength();
-    }
-
-    private void calculateAudioLength() {
-        if (currentAudioSampleSet == null || sampleRate == 0 || channels == 0)
-            return;
 
         currentSampleSetLength = AudioUtils.calculateAudioLength(
                 currentAudioSampleSet.length, sampleRate, channels);

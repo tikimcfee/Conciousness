@@ -65,6 +65,7 @@ public class WaveformTextureView extends ZoomableTextureView
 
     public void refresh() {
         // Update the display.
+
         Canvas canvas = lockCanvas();
         if (canvas != null) {
             drawWaveform(canvas);

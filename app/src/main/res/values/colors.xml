@@ -4,6 +4,8 @@
     <color name="colorPrimaryDark">#251b4b</color>
     <color name="colorAccent">#ffffff</color>
 
+    <color name="colorTextDisabledDefault">#80000000</color>
+
     <color name="colorPrimaryStateInactiveBackground">#004422</color>
     <color name="colorPrimaryStateActiveBackground">#008866</color>
 
