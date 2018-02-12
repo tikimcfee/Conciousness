@@ -1,9 +1,13 @@
 package com.braindroid.nervecenter.domainRecordingTools.recordingSource;
 
+import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.os.Process;
 import android.os.SystemClock;
+import android.support.annotation.Nullable;
 
 import com.braindroid.nervecenter.utils.LibConstants;
 
@@ -15,31 +19,35 @@ import static android.media.MediaRecorder.AudioSource.DEFAULT;
 public class AudioRecordingHandler implements Runnable {
 
     private final AudioRecord audioRecord;
-    private final int bufferSize;
-
-    private volatile boolean shouldStopRecording = false;
-    private volatile boolean recordingSet = false;
-
     private Thread currentRecordingThread = null;
+    private volatile boolean shouldStopRecording = false;
 
-    private AudioSampleReceiver audioSampleReceiver;
+    public final int bufferSize;
 
-    private final Thread debugThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            while (!Thread.interrupted()) {
-                SystemClock.sleep(1000);
-            }
-        }
-    });
-
-
-    public AudioRecordingHandler() {
-        this.bufferSize = AudioRecord.getMinBufferSize(
+    public static int getDefaultBufferSize() {
+        return AudioRecord.getMinBufferSize(
                 LibConstants.SAMPLE_RATE,
                 LibConstants.DEFAULT_AUDIO_IN_CHANNEL,
                 ENCODING_PCM_16BIT
         );
+    }
+
+    @Nullable
+    private AudioSampleReceiver audioSampleReceiver;
+
+
+//    private final Thread debugThread = new Thread(new Runnable() {
+//        @Override
+//        public void run() {
+//            while (!Thread.interrupted()) {
+//                SystemClock.sleep(1000);
+//            }
+//        }
+//    });
+
+
+    public AudioRecordingHandler() {
+        this.bufferSize = getDefaultBufferSize();
         this.audioRecord = new AudioRecord(
                 DEFAULT,
                 LibConstants.SAMPLE_RATE,
@@ -48,7 +56,7 @@ public class AudioRecordingHandler implements Runnable {
                 bufferSize
         );
 
-        debugThread.start();
+//        debugThread.start();
     }
 
     public void startRecording() {
@@ -57,7 +65,7 @@ public class AudioRecordingHandler implements Runnable {
         }
 
         Timber.v("Recording starting...");
-        recordingSet = false;
+//        recordingSet = false;
         shouldStopRecording = false;
 
         currentRecordingThread = getNewThread(this);
@@ -124,7 +132,7 @@ public class AudioRecordingHandler implements Runnable {
 
         Timber.v("Recording stopped. Setting last recording. Bytes read : %s", totalBytesRead);
 
-        recordingSet = true;
+//        recordingSet = true;
         audioSampleReceiver.onSamplingStopped();
     }
 

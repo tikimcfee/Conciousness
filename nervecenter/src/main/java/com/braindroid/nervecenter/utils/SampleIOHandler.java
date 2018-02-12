@@ -52,7 +52,6 @@ public class SampleIOHandler implements AudioSampleReceiver {
     public SampleIOHandler(FileOutputStream fileInputStream) {
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
-
         this.fileChannel = fileInputStream.getChannel();
     }
 

@@ -4,9 +4,12 @@ import android.media.MediaRecorder
 import android.media.MediaRecorder.AudioEncoder.AAC
 import android.media.MediaRecorder.AudioSource.MIC
 import android.media.MediaRecorder.OutputFormat.MPEG_4
+import com.braindroid.nervecenter.domainRecordingTools.recordingSource.AudioRecordingHandler
 import com.braindroid.nervecenter.kotlinModels.data.OnDiskRecording
 import com.braindroid.nervecenter.kotlinModels.utils.OnDiskRecordingFileHandler
+import com.braindroid.nervecenter.utils.SampleIOHandler
 import timber.log.Timber
+import java.io.FileOutputStream
 import java.io.IOException
 
 class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
@@ -19,7 +22,8 @@ class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
     private var encodingRate = 96000
 
     /* MediaRecorder instance and external listeners */
-    private val mediaRecorder = MediaRecorder()
+    private var recordingDelegate: RecordingDelegate? = null
+//    private val mediaRecorder = MediaRecorder()
     var errorListener: MediaRecorder.OnErrorListener? = null
     var infoListener: MediaRecorder.OnInfoListener? = null
 
@@ -31,25 +35,25 @@ class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
 
 
     init {
-        mediaRecorder.setOnErrorListener { mr, what, extra ->
-            Timber.e("error from ($mr, $this) --> what:$what extra:$extra")
-            errorListener?.onError(mr, what, extra)
-        }
+//        mediaRecorder.setOnErrorListener { mr, what, extra ->
+//            Timber.e("error from ($mr, $this) --> what:$what extra:$extra")
+//            errorListener?.onError(mr, what, extra)
+//        }
 
-        mediaRecorder.setOnInfoListener { mr, what, extra ->
-            Timber.v("info from ($mr, $this) --> what:$what extra:$extra")
-            infoListener?.onInfo(mr, what, extra)
-        }
+//        mediaRecorder.setOnInfoListener { mr, what, extra ->
+//            Timber.v("info from ($mr, $this) --> what:$what extra:$extra")
+//            infoListener?.onInfo(mr, what, extra)
+//        }
     }
 
     private fun reinit() {
-        mediaRecorder.reset()
-
-        mediaRecorder.setAudioSource(audioSource)
-        mediaRecorder.setOutputFormat(outputFormat)
-        mediaRecorder.setAudioEncoder(audioEncoder)
-        mediaRecorder.setAudioSamplingRate(samplingRate)
-        mediaRecorder.setAudioEncodingBitRate(encodingRate)
+//        mediaRecorder.reset()
+//
+//        mediaRecorder.setAudioSource(audioSource)
+//        mediaRecorder.setOutputFormat(outputFormat)
+//        mediaRecorder.setAudioEncoder(audioEncoder)
+//        mediaRecorder.setAudioSamplingRate(samplingRate)
+//        mediaRecorder.setAudioEncodingBitRate(encodingRate)
     }
 
     fun prepare(onDiskRecording: OnDiskRecording): Boolean {
@@ -57,17 +61,22 @@ class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
 
         currentRecording = onDiskRecording
         return fileHandler.createAudioOutStream(onDiskRecording)?.let {
-            try {
-                mediaRecorder.setOutputFile(it.fd)
-                mediaRecorder.prepare()
-                return true
-            } catch (ise: IllegalStateException) {
-                Timber.e(ise, "Illegal state exception for $mediaRecorder, $this")
-            } catch (ioe: IOException) {
-                Timber.e(ioe, "IOException for $mediaRecorder, $this")
-            }
+            recordingDelegate = RecordingDelegate()
+            recordingDelegate?.fileOutputStream = it
+            return@let true
 
-            false
+//            try {
+//                recordingDelegate.startRecording(it)
+////                mediaRecorder.setOutputFile(it.fd)
+////                mediaRecorder.prepare()
+//                return true
+//            } catch (ise: IllegalStateException) {
+//                Timber.e(ise, "Illegal state exception for $mediaRecorder, $this")
+//            } catch (ioe: IOException) {
+//                Timber.e(ioe, "IOException for $mediaRecorder, $this")
+//            }
+//
+//            false
         }?: false
     }
 
@@ -78,7 +87,8 @@ class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
         }
 
         try {
-            mediaRecorder.start()
+//            mediaRecorder.start()
+            recordingDelegate?.startRecording()
             isRecording = true
         } catch (ise: IllegalStateException) {
             Timber.e(ise, "Could not start media recorder; nothing is being written to $currentRecording.")
@@ -92,12 +102,35 @@ class OnDiskMediaRecorder(val fileHandler: OnDiskRecordingFileHandler) {
         }
 
         try {
-            mediaRecorder.stop()
+//            mediaRecorder.stop()
+            recordingDelegate?.stopRecording()
         } catch (e: IllegalStateException) {
             Timber.e(e, "Could not stop media recorder; recording may be corrupt or unreadable $currentRecording.")
         }
 
         isRecording = false
+    }
+
+    private class RecordingDelegate {
+        private val recordingHandler = AudioRecordingHandler()
+        private var sampleIo: SampleIOHandler? = null
+
+        var fileOutputStream: FileOutputStream? = null
+            set(value) {
+                field = value
+                val handler = SampleIOHandler(value)
+                sampleIo = handler
+                recordingHandler.setAudioSampleReceiver(handler)
+            }
+
+        fun startRecording() {
+            recordingHandler.startRecording()
+        }
+
+        fun stopRecording() {
+            recordingHandler.stopRecording()
+            sampleIo?.kill()
+        }
     }
 
 }
